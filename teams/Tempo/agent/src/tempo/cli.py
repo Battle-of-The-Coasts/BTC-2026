@@ -61,6 +61,14 @@ def cmd_scene(args: argparse.Namespace) -> None:
     print("view saved to last-view.jpg")
 
 
+def cmd_eval(args: argparse.Namespace) -> None:
+    from .eval import run, summarize
+
+    for condition in args.conditions:
+        trials = run(condition, args.limit)
+        print(condition, summarize(trials))
+
+
 def main() -> None:
     load_dotenv(ENV_FILE)
     p = argparse.ArgumentParser(prog="tempo")
@@ -72,6 +80,10 @@ def main() -> None:
     a.set_defaults(fn=cmd_ask)
     sub.add_parser("listen", help="push-to-talk loop").set_defaults(fn=cmd_listen)
     sub.add_parser("scene", help="dump what the agent would see").set_defaults(fn=cmd_scene)
+    e = sub.add_parser("eval", help="run the fixed request set")
+    e.add_argument("conditions", nargs="*", default=["geometry", "pixels"])
+    e.add_argument("--limit", type=int)
+    e.set_defaults(fn=cmd_eval)
     args = p.parse_args()
     try:
         args.fn(args)

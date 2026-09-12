@@ -22,7 +22,8 @@ handles listed in the scene. If the request needs no action, just call `say`."""
 
 
 class Brain:
-    def __init__(self, model: str | None = None) -> None:
+    def __init__(self, model: str | None = None, geometry: bool = True) -> None:
+        self.geometry = geometry
         key = os.environ.get("GEMINI_API_KEY")
         if not key:
             raise SystemExit("GEMINI_API_KEY is not set (put it in the agent env file)")
@@ -32,8 +33,11 @@ class Brain:
     def decide(self, request: str, snap: Snapshot, audio: bytes | None = None) -> tuple[list[types.FunctionCall], str]:
         parts: list[types.Part] = [
             types.Part.from_bytes(data=snap.png, mime_type="image/jpeg"),
-            types.Part.from_text(text="Scene:\n" + snap.scene_text()),
         ]
+        if self.geometry:
+            parts.append(types.Part.from_text(text="Scene:\n" + snap.scene_text()))
+        else:
+            parts.append(types.Part.from_text(text="Scene: (no geometry available; judge distances and surfaces from the image)"))
         if audio:
             parts.append(types.Part.from_bytes(data=audio, mime_type="audio/wav"))
             parts.append(types.Part.from_text(text="The wearer said the audio above."))
