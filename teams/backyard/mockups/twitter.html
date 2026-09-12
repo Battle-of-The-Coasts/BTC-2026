@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home / X</title>
+<link rel="stylesheet" href="overlay.css">
+<style>
+  /* ---------- a faithful-enough clone of X's 2025 web UI (dark "Lights out" theme) ---------- */
+  :root {
+    --x-bg: #000; --x-line: #2f3336; --x-ink: #e7e9ea; --x-muted: #71767b; --x-blue: #1d9bf0;
+    --x-hover: #181818; --x-card: #16181c; --x-like: #f91880; --x-rt: #00ba7c;
+    --x-font: "TwitterChirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--x-bg); color: var(--x-ink); font: 15px/1.35 var(--x-font); }
+  a { color: inherit; text-decoration: none; }
+  svg.i { width: 24px; height: 24px; fill: currentColor; }
+
+  .x-shell { display: grid; grid-template-columns: 275px 600px 350px; justify-content: center; gap: 0 30px; max-width: 1300px; margin: 0 auto; }
+  @media (max-width: 1280px) { .x-shell { grid-template-columns: 88px 600px 350px; } .x-nav .lbl, .x-nav .post .lbl { display: none; } .x-nav .post { width: 50px; padding: 0; } .x-nav .post .ico { display: inline; } .x-nav .me span:last-child { display: none; } }
+  @media (max-width: 1080px) { .x-shell { grid-template-columns: 88px minmax(0, 600px); } .x-right { display: none; } }
+  @media (max-width: 700px) { .x-shell { grid-template-columns: minmax(0, 1fr); } .x-nav { display: none; } }
+
+  /* left nav */
+  .x-nav { position: sticky; top: 58px; height: calc(100vh - 58px); padding: 4px 8px; display: flex; flex-direction: column; }
+  .x-nav .it { display: flex; align-items: center; gap: 20px; padding: 12px; border-radius: 999px; font-size: 20px; width: fit-content; }
+  .x-nav .it:hover { background: var(--x-hover); }
+  .x-nav .it.active { font-weight: 700; }
+  .x-nav .logo { padding: 10px 12px; }
+  .x-nav .logo svg { width: 30px; height: 30px; }
+  .x-nav .post .ico { display: none; width: 24px; height: 24px; fill: currentColor; }
+  .x-nav .post { margin-top: 12px; background: #eff3f4; color: #0f1419; font-weight: 700; font-size: 17px; border-radius: 999px; width: 90%; height: 52px; display: flex; align-items: center; justify-content: center; }
+  .x-nav .me { margin-top: auto; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 999px; }
+  .x-nav .me:hover { background: var(--x-hover); }
+  .x-nav .me .av { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #ec4899); }
+  .x-nav .me .nm { font-weight: 700; font-size: 15px; } .x-nav .me .hd { color: var(--x-muted); font-size: 15px; }
+
+  /* centre column */
+  .x-main { border-left: 1px solid var(--x-line); border-right: 1px solid var(--x-line); min-height: 100vh; }
+  .x-tabs { position: sticky; top: 58px; z-index: 300; background: rgba(0,0,0,.75); backdrop-filter: blur(12px); border-bottom: 1px solid var(--x-line); display: flex; }
+  .x-tabs div { flex: 1; text-align: center; padding: 16px 0; color: var(--x-muted); font-weight: 500; position: relative; }
+  .x-tabs div:hover { background: var(--x-hover); }
+  .x-tabs div.on { color: var(--x-ink); font-weight: 700; }
+  .x-tabs div.on::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 56px; height: 4px; border-radius: 2px; background: var(--x-blue); transform: translateX(-50%); }
+  .x-compose { display: flex; gap: 12px; padding: 14px 16px 10px; border-bottom: 1px solid var(--x-line); }
+  .x-compose .av { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #ec4899); flex: none; }
+  .x-compose .ph { font-size: 20px; color: var(--x-muted); padding: 8px 0 12px; }
+  .x-compose .tools { display: flex; align-items: center; gap: 4px; color: var(--x-blue); margin-top: 4px; }
+  .x-compose .tools svg { width: 20px; height: 20px; fill: currentColor; padding: 8px; box-sizing: content-box; }
+  .x-compose .btn { margin-left: auto; background: #787a7a; color: #000; font-weight: 700; border-radius: 999px; padding: 8px 16px; font-size: 15px; }
+  .x-showposts { text-align: center; color: var(--x-blue); padding: 14px; border-bottom: 1px solid var(--x-line); }
+
+  .x-t { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 0 10px; padding: 12px 16px 6px; border-bottom: 1px solid var(--x-line); position: relative; }
+  .x-t:hover { background: #080808; }
+  .x-t.thread { border-bottom: 0; }
+  .x-t.thread .line { position: absolute; left: 35px; top: 58px; bottom: -6px; width: 2px; background: #333639; }
+  .x-t .ctx { grid-column: 2; color: var(--x-muted); font-size: 13px; font-weight: 700; margin: -4px 0 4px; display: flex; align-items: center; gap: 6px; }
+  .x-t .ctx svg { width: 16px; height: 16px; fill: currentColor; }
+  .x-t .av { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 15px; position: relative; z-index: 1; }
+  .x-t .av.def { background: #cfd9de; color: #000; }
+  .x-t .av.def svg { width: 24px; height: 24px; fill: #536471; }
+  .x-t .av.sq { border-radius: 6px; }
+  .x-t .hd { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 15px; color: var(--x-muted); line-height: 20px; }
+  .x-t .hd .nm { font-weight: 700; color: var(--x-ink); }
+  .x-t .hd .chk { width: 18px; height: 18px; fill: var(--x-blue); }
+  .x-t .hd .chk.gold { fill: #e2b719; } .x-t .hd .chk.grey { fill: #829aab; }
+  .x-t .hd .more { margin-left: auto; }
+  .x-t .hd .more svg { width: 19px; height: 19px; fill: var(--x-muted); }
+  .x-t .replyto { color: var(--x-muted); font-size: 15px; margin-top: 2px; }
+  .x-t .replyto b { color: var(--x-blue); font-weight: 400; }
+  .x-t .tx { margin: 2px 0 8px; white-space: pre-line; font-size: 15px; line-height: 20px; }
+  .x-t .tx b { color: var(--x-blue); font-weight: 400; }
+  .x-t .media { border: 1px solid var(--x-line); border-radius: 16px; overflow: hidden; margin: 4px 0 10px; }
+  .x-t .media .img { height: 260px; display: flex; align-items: flex-end; padding: 14px; font-size: 13px; color: #cbd5e1; }
+  .x-t .media .cap { padding: 10px 12px; border-top: 1px solid var(--x-line); color: var(--x-muted); font-size: 13px; }
+  .x-t .media .cap b { display: block; color: var(--x-ink); font-weight: 400; font-size: 15px; }
+  .x-t .acts { display: flex; justify-content: space-between; max-width: 425px; color: var(--x-muted); font-size: 13px; margin: 0 0 6px -8px; }
+  .x-t .acts span { display: inline-flex; align-items: center; gap: 4px; padding: 0; }
+  .x-t .acts svg { width: 18.75px; height: 18.75px; fill: currentColor; padding: 8px; box-sizing: content-box; border-radius: 50%; }
+  .x-t .acts span:hover { color: var(--x-blue); } .x-t .acts span.rt:hover { color: var(--x-rt); } .x-t .acts span.lk:hover { color: var(--x-like); }
+  .x-t .acts .right { display: flex; gap: 0; }
+  .x-t .promoted { color: var(--x-muted); font-size: 13px; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+  .x-t .promoted svg { width: 14px; height: 14px; fill: currentColor; }
+  .x-showmore { grid-column: 2; color: var(--x-blue); font-size: 15px; padding: 6px 0 12px; }
+  .x-t.reply { padding-top: 6px; }
+  .x-t .tx.rm { color: var(--x-muted); font-style: italic; }
+
+  /* right column */
+  .x-right { position: sticky; top: 58px; height: calc(100vh - 58px); overflow: auto; padding: 4px 0 0 4px; scrollbar-width: none; }
+  .x-search { position: sticky; top: 0; background: #000; padding: 4px 0 12px; z-index: 5; }
+  .x-search div { height: 44px; border-radius: 999px; border: 1px solid var(--x-line); background: #000; display: flex; align-items: center; gap: 12px; padding: 0 16px; color: var(--x-muted); font-size: 15px; }
+  .x-search svg { width: 18px; height: 18px; fill: currentColor; }
+  .x-card { border: 1px solid var(--x-line); border-radius: 16px; margin-bottom: 16px; overflow: hidden; }
+  .x-card h2 { margin: 0; padding: 12px 16px 6px; font-size: 20px; font-weight: 800; }
+  .x-card .row { padding: 12px 16px; display: flex; gap: 10px; align-items: center; }
+  .x-card .row:hover { background: var(--x-hover); }
+  .x-card .trend { display: block; padding: 12px 16px; }
+  .x-card .trend:hover { background: var(--x-hover); }
+  .x-card .trend .s { color: var(--x-muted); font-size: 13px; } .x-card .trend .n { font-weight: 700; font-size: 15px; margin: 2px 0; }
+  .x-card .more { display: block; padding: 14px 16px; color: var(--x-blue); font-size: 15px; }
+  .x-card .prem { padding: 12px 16px; font-size: 15px; }
+  .x-card .prem p { margin: 0 0 12px; }
+  .x-card .prem .b { display: inline-block; background: var(--x-blue); color: #fff; font-weight: 700; border-radius: 999px; padding: 8px 16px; }
+  .x-card .wf .av { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; flex: none; }
+  .x-card .wf .av.def { background: #cfd9de; } .x-card .wf .av.def svg { width: 24px; height: 24px; fill: #536471; }
+  .x-card .wf .who { flex: 1; min-width: 0; line-height: 20px; }
+  .x-card .wf .who .nm { font-weight: 700; display: flex; align-items: center; gap: 4px; }
+  .x-card .wf .who .nm .chk { width: 16px; height: 16px; fill: var(--x-blue); }
+  .x-card .wf .who .hd { color: var(--x-muted); font-size: 15px; }
+  .x-card .wf .fb { background: #eff3f4; color: #0f1419; font-weight: 700; border-radius: 999px; padding: 6px 16px; font-size: 14px; }
+  .x-foot { color: var(--x-muted); font-size: 13px; padding: 0 16px 16px; line-height: 1.6; }
+
+  /* dark-theme tokens for the add-on pieces on this page */
+  .ts-widget.ts-dark { --ts-card: #000; }
+</style>
+</head>
+<body class="ts-dark">
+
+<!-- ============ add-on banner (only in this mock-up: explains what the extension adds) ============ -->
+<div class="ts-banner">
+  <div class="ts-bar-in">
+    <span class="ts-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.5v6c0 5 3.3 8.6 7.5 10 4.2-1.4 7.5-5 7.5-10v-6z"/><path d="m9 12 2 2 4-4"/></svg> Trust Score</span>
+    <span style="color:#94a3b8">mock-up · what the browser add-on adds to an X timeline</span>
+    <span class="ts-legend">
+      <span class="ts-badge ts-green"><span class="ts-num">70–100</span></span> likely genuine
+      <span class="ts-badge ts-amber"><span class="ts-num">40–69</span></span> uncertain
+      <span class="ts-badge ts-red"><span class="ts-num">0–39</span></span> bot-like
+      <span class="ts-badge ts-grey"><span class="ts-num">n/a</span></span> not scored
+    </span>
+    <span class="ts-spacer"></span>
+    <button class="ts-btn" data-ts-guide>Hide guide</button>
+    <button class="ts-btn" data-ts-how>How does it work?</button>
+    <a class="ts-btn" href="reddit.html">See the Reddit version →</a>
+    <label class="ts-switch"><span>Overlay ON</span><i></i></label>
+  </div>
+</div>
+<div class="ts-guide">
+  <div class="ts-guide-in">
+    <div class="ts-g-intro"><b>What you are looking at.</b> A normal X "For you" timeline. The add-on adds one <b>shield badge</b> next to every handle (a trust score from 0 to 100 computed from the account's profile and its position in the follow / mention / reply graph, never from the text of its posts), a coloured ring on avatars, and a summary card in the right column. Hover or click any badge for the full explanation. Flip the switch to see the page without the add-on.</div>
+    <div class="ts-g-card"><h5><span class="ts-g-n">1</span>A real journalist</h5><p>@sarah_chen_wire: 12-year account, mutual follows with hundreds of trusted accounts and a verified newsroom. Scores 96.</p><button class="ts-btn" data-ts-jump="ex1">Show me</button></div>
+    <div class="ts-g-card"><h5><span class="ts-g-n">2</span>Bought followers piling into the replies</h5><p>Three replies from accounts in the same bought-follower block (2,140 accounts that all follow the same 300 customers). Each scores under 10.</p><button class="ts-btn" data-ts-jump="ex2">Show me</button></div>
+    <div class="ts-g-card"><h5><span class="ts-g-n">3</span>Normal account, fake audience</h5><p>@NovaYieldApp itself behaves like a brand account, but 71 % of its followers sit in that block. Scores 44: uncertain.</p><button class="ts-btn" data-ts-jump="ex3">Show me</button></div>
+    <div class="ts-g-card"><h5><span class="ts-g-n">4</span>Overnight "news" account</h5><p>@BreakingAlerts_ is 3 days old and gained 41k followers in 48 h, 92 % of them from the block. Scores 21, despite 8k reposts.</p><button class="ts-btn" data-ts-jump="ex4">Show me</button></div>
+  </div>
+</div>
+
+<!-- ============ X page ============ -->
+<div class="x-shell">
+  <nav class="x-nav">
+    <a class="it logo" href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+    <a class="it active" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M21.591 7.146 12.52 1.157c-.316-.21-.724-.21-1.04 0l-9.071 5.99c-.26.173-.409.456-.409.757v13.183c0 .502.418.913.929.913H9.14c.51 0 .929-.41.929-.913v-7.075h3.909v7.075c0 .502.417.913.928.913h6.165c.511 0 .929-.41.929-.913V7.904c0-.301-.158-.584-.408-.758z"/></svg><span class="lbl">Home</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z"/></svg><span class="lbl">Explore</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958zM12 20c-1.306 0-2.417-.835-2.829-2h5.658c-.412 1.165-1.523 2-2.829 2zm-6.866-4 .847-6.698C6.364 6.272 8.941 4 11.996 4s5.627 2.268 6.013 5.295L18.864 16H5.134z"/></svg><span class="lbl">Notifications</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.636V5.5c0-.276-.224-.5-.5-.5h-15zm15.5 5.463-8 3.636-8-3.638V18.5c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5v-8.037z"/></svg><span class="lbl">Messages</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M2.205 7.423 11.745 21h4.241L6.446 7.423H2.204zm4.237 7.541L2.2 21h4.243l2.12-3.017-2.121-3.02zM16.957 0 9.624 10.435l2.122 3.02L21.2 0h-4.243zm.767 6.456V21H21.2V1.458l-3.476 4.998z"/></svg><span class="lbl">Grok</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><span class="lbl">Bookmarks</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M7.501 19.917 7.471 21H.472l.029-1.027c.184-6.618 3.736-8.977 7-8.977.963 0 1.95.212 2.87.672-.444.478-.851 1.03-1.212 1.656-.507-.204-1.062-.328-1.658-.328-2.767 0-4.57 2.223-4.938 6.004H7.56c-.023.302-.05.599-.059.917zm15.998.056L23.528 21H9.472l.029-1.027c.184-6.618 3.736-8.977 7-8.977s6.816 2.358 7 8.977zM21.437 19c-.367-3.781-2.17-6.004-4.938-6.004s-4.57 2.223-4.938 6.004h9.875zm-4.938-9c-.799 0-1.527-.279-2.116-.73-.836-.64-1.384-1.638-1.384-2.77 0-1.93 1.567-3.5 3.5-3.5s3.5 1.57 3.5 3.5c0 1.132-.548 2.13-1.384 2.77-.589.451-1.317.73-2.116.73zm-1.5-3.5c0 .827.673 1.5 1.5 1.5s1.5-.673 1.5-1.5-.673-1.5-1.5-1.5-1.5.673-1.5 1.5zM7.5 3C9.433 3 11 4.57 11 6.5S9.433 10 7.5 10 4 8.43 4 6.5 5.567 3 7.5 3zm0 2C6.673 5 6 5.673 6 6.5S6.673 8 7.5 8 9 7.327 9 6.5 8.327 5 7.5 5z"/></svg><span class="lbl">Communities</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="lbl">Premium</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19zm.486-5.56C7.627 11.85 9.648 11 12 11s4.373.85 5.863 2.44c1.477 1.58 2.366 3.8 2.632 6.46l.11 1.1H3.395l.11-1.1c.266-2.66 1.155-4.88 2.632-6.46zM12 4c-1.105 0-2 .9-2 2s.895 2 2 2 2-.9 2-2-.895-2-2-2zM8 6c0-2.21 1.791-4 4-4s4 1.79 4 4-1.791 4-4 4-4-1.79-4-4z"/></svg><span class="lbl">Profile</span></a>
+    <a class="it" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M3.75 12c0-4.56 3.69-8.25 8.25-8.25s8.25 3.69 8.25 8.25-3.69 8.25-8.25 8.25S3.75 16.56 3.75 12zM12 1.75C6.34 1.75 1.75 6.34 1.75 12S6.34 22.25 12 22.25 22.25 17.66 22.25 12 17.66 1.75 12 1.75zm-4.75 11.5c.69 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25S6 11.31 6 12s.56 1.25 1.25 1.25zm9.5 0c.69 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25-1.25.56-1.25 1.25.56 1.25 1.25 1.25zM13.25 12c0 .69-.56 1.25-1.25 1.25s-1.25-.56-1.25-1.25.56-1.25 1.25-1.25 1.25.56 1.25 1.25z"/></svg><span class="lbl">More</span></a>
+    <a class="post" href="#"><span class="lbl">Post</span><svg class="ico" viewBox="0 0 24 24"><path d="M23 3c-6.62-.1-10.38 2.421-13.05 6.03C7.29 12.61 6 17.331 6 22h2c0-1.007.07-1.966.207-2.883 6.07-.269 9.947-2.686 12.35-6.157C22.4 10.309 23 6.32 23 3zm-7.24 8.89c-1.71 2.41-4.47 4.16-8.98 4.65 1.31-6.71 6.4-11.03 14.19-11.51-.29 2.21-1.05 4.87-2.21 6.86zM3 22h2c0-1.86.51-4.57 1.98-7.03L5.29 13.9C3.86 16.56 3 19.62 3 22z"/></svg></a>
+    <a class="me" href="#"><span class="av"></span><span><div class="nm">Gabriel</div><div class="hd">@gabriel_builds</div></span></a>
+  </nav>
+
+  <main class="x-main">
+    <div class="x-tabs"><div class="on">For you</div><div>Following</div></div>
+    <div class="x-compose">
+      <span class="av"></span>
+      <div style="flex:1">
+        <div class="ph">What is happening?!</div>
+        <div class="tools">
+          <svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 15.414l-3-3-5 5-3-3-3 3V18.5c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-3.086zM9.75 7C8.784 7 8 7.784 8 8.75s.784 1.75 1.75 1.75 1.75-.784 1.75-1.75S10.716 7 9.75 7z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.12 3 5.5 3h13C19.88 3 21 4.119 21 5.5v13c0 1.381-1.12 2.5-2.5 2.5h-13C4.12 21 3 19.881 3 18.5v-13zM5.5 5c-.28 0-.5.224-.5.5v13c0 .276.22.5.5.5h13c.28 0 .5-.224.5-.5v-13c0-.276-.22-.5-.5-.5h-13zM18 10.5V9h-3v6h1.5v-2h2v-1.5h-2V10.5h1.5zm-8.5 0h-2v4H6V9h1.5v1.5H9V9h1.5v6H9v-2h-1.5v2H6zm3 0H12V9h-1.5V15H12v-4.5z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M6 5c-1.1 0-2 .895-2 2v10c0 1.105.9 2 2 2h12c1.1 0 2-.895 2-2V7c0-1.105-.9-2-2-2H6zM4 7c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2V7zm10 3h2v2h-2v-2zm-4 0h2v2h-2v-2zM8 10h2v2H8v-2z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 2.5c.828 0 1.5-1.119 1.5-2.5S15.328 7 14.5 7 13 8.119 13 9.5s.672 2.5 1.5 2.5zM12 16c-2.224 0-3.021-2.227-3.051-2.316l-1.897.633c.05.15 1.271 3.684 4.949 3.684s4.898-3.533 4.949-3.684l-1.896-.638c-.033.095-.83 2.322-3.053 2.322zm10.25-4.001c0 5.652-4.598 10.25-10.25 10.25S1.75 17.652 1.75 12 6.348 1.75 12 1.75 22.25 6.348 22.25 12zm-2 0c0-4.549-3.701-8.25-8.25-8.25S3.75 7.451 3.75 12s3.701 8.25 8.25 8.25 8.25-3.701 8.25-8.25z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M6 3V2h2v1h6V2h2v1h1.5C18.88 3 20 4.119 20 5.5v2h-2v-2c0-.276-.22-.5-.5-.5H16v1h-2V5H8v1H6V5H4.5c-.28 0-.5.224-.5.5v12c0 .276.22.5.5.5h3v2h-3C3.12 20 2 18.881 2 17.5v-12C2 4.119 3.12 3 4.5 3H6zm9.5 8c-2.49 0-4.5 2.015-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.015 4.5-4.5-2.01-4.5-4.5-4.5zM9 15.5C9 11.91 11.91 9 15.5 9s6.5 2.91 6.5 6.5-2.91 6.5-6.5 6.5S9 19.09 9 15.5zm5.5-2.5h2v2.086l1.71 1.707-1.42 1.414-2.29-2.293V13z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 7c-1.93 0-3.5 1.57-3.5 3.5S10.07 14 12 14s3.5-1.57 3.5-3.5S13.93 7 12 7zm0 5c-.827 0-1.5-.673-1.5-1.5S11.173 9 12 9s1.5.673 1.5 1.5S12.827 12 12 12zm0-10c-4.687 0-8.5 3.813-8.5 8.5 0 5.967 7.621 11.174 7.945 11.392l.555.375.555-.375c.324-.218 7.945-5.425 7.945-11.392C20.5 5.813 16.687 2 12 2zm0 17.816C10.395 18.564 5.5 14.443 5.5 10.5 5.5 6.916 8.416 4 12 4s6.5 2.916 6.5 6.5c0 3.943-4.895 8.064-6.5 9.316z"/></svg>
+          <span class="btn">Post</span>
+        </div>
+      </div>
+    </div>
+    <div class="x-showposts">Show 38 posts</div>
+
+    <!-- ===== 1: journalist thread + replies ===== -->
+    <article class="x-t thread" id="ex1">
+      <span class="line"></span>
+      <span class="av" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)" data-ts-ring="sarah_chen_wire">SC</span>
+      <div>
+        <div class="hd"><span class="nm">Sarah Chen</span><svg class="chk" viewBox="0 0 24 24"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg><span data-ts="sarah_chen_wire"></span><span>@sarah_chen_wire · 2h</span><span class="ts-callout"><b>1</b> real journalist · hover the badge</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">NEW: NovaYield, the "savings app" advertising 11.5% APY everywhere, is not a bank and carries no deposit insurance. Its own terms say your cash is lent to "partner institutions" it declines to name. I spent three weeks asking. 🧵 1/9</div>
+        <div class="media"><div class="img" style="background:linear-gradient(160deg,#1e293b,#0f172a)">Screenshot of the NovaYield terms, section 7.2 highlighted</div><div class="cap"><b>The "savings app" paying 11.5%: where does the money go?</b>wiredesk.example · 12 min read</div></div>
+        <div class="acts">
+          <span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>1.2K</span>
+          <span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>4.8K</span>
+          <span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>19K</span>
+          <span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>2.1M</span>
+          <span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span>
+        </div>
+      </div>
+    </article>
+
+    <article class="x-t thread reply" id="ex3">
+      <span class="line"></span>
+      <span class="av sq" style="background:#111827;font-size:12px;border:1px solid #334155" data-ts-ring="NovaYieldApp">NY</span>
+      <div>
+        <div class="hd"><span class="nm">NovaYield</span><svg class="chk gold" viewBox="0 0 24 24"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg><span data-ts="NovaYieldApp"></span><span>@NovaYieldApp · 1h</span><span class="ts-callout"><b>3</b> normal account, 71% fake followers</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="replyto">Replying to <b>@sarah_chen_wire</b></div>
+        <div class="tx">We're disappointed by the framing here. Customer funds are held with regulated partner institutions and yields come from a diversified short-duration credit portfolio. Happy to walk you through it, our DMs are open.</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>318</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>1.1K</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>2.4K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>410K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t thread reply" id="ex2">
+      <span class="line"></span>
+      <span class="av def" data-ts-ring="maria_l_88231"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+      <div>
+        <div class="hd"><span class="nm">Maria L.</span><span data-ts="maria_l_88231"></span><span>@maria_l_88231 · 1h</span><span class="ts-callout"><b>2</b> bought-follower block · 3 replies in a row</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="replyto">Replying to <b>@sarah_chen_wire</b></div>
+        <div class="tx">been using NovaYield since june, best decision of my life 🙌 haters gonna hate</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>4</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>61</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>97</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>38K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t thread reply">
+      <span class="line"></span>
+      <span class="av def" data-ts-ring="jake_saves2026"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+      <div>
+        <div class="hd"><span class="nm">Jake 💰</span><span data-ts="jake_saves2026"></span><span>@jake_saves2026 · 1h</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="replyto">Replying to <b>@sarah_chen_wire</b></div>
+        <div class="tx">hit piece. payouts every single week, zero problems. do your own research people</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>2</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>58</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>91</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>31K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t thread reply">
+      <span class="line"></span>
+      <span class="av def" data-ts-ring="happy_investor_4471"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+      <div>
+        <div class="hd"><span class="nm">Happy Investor</span><span data-ts="happy_investor_4471"></span><span>@happy_investor_4471 · 58m</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="replyto">Replying to <b>@sarah_chen_wire</b></div>
+        <div class="tx">Journalists hate it when regular people make money 😂😂</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>1</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>44</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>70</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>27K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t reply">
+      <span class="av" style="background:linear-gradient(135deg,#f59e0b,#ef4444)" data-ts-ring="DataDrivenDan">DD</span>
+      <div>
+        <div class="hd"><span class="nm">Dan Okafor</span><span data-ts="DataDrivenDan"></span><span>@DataDrivenDan · 52m</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="replyto">Replying to <b>@sarah_chen_wire</b> and <b>@NovaYieldApp</b></div>
+        <div class="tx">Checked just now: the "partner institutions" link in your footer goes to a 404. The three replies above mine were all created the same week and follow the exact same 300 accounts. Screenshot.</div>
+        <div class="media"><div class="img" style="background:linear-gradient(160deg,#111827,#1f2937);height:180px">404 · novayield.example/partners</div></div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>86</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>1.9K</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>8.7K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>640K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+        <div class="x-showmore">Show more replies</div>
+      </div>
+    </article>
+
+    <!-- ===== 4: overnight "news" account ===== -->
+    <article class="x-t" id="ex4">
+      <span class="av sq" style="background:#7f1d1d;font-size:11px" data-ts-ring="BreakingAlerts_">🚨</span>
+      <div>
+        <div class="hd"><span class="nm">Breaking Alerts</span><svg class="chk" viewBox="0 0 24 24"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg><span data-ts="BreakingAlerts_"></span><span>@BreakingAlerts_ · 3h</span><span class="ts-callout"><b>4</b> 3-day-old account, 41k bought followers</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">🚨 BREAKING: Regulators reportedly preparing to FREEZE withdrawals at several fintech "savings apps" as early as Monday. Move your money NOW. More soon.</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>2.3K</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>8.1K</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>12K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>3.4M</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t">
+      <span class="av" style="background:linear-gradient(135deg,#10b981,#3b82f6)" data-ts-ring="tomas_eng">T</span>
+      <div>
+        <div class="hd"><span class="nm">Tomas Lindqvist</span><span data-ts="tomas_eng"></span><span>@tomas_eng · 4h</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">hot take: the best budgeting app is still a spreadsheet you actually open. fight me.</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>212</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>340</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>4.1K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>180K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <!-- promoted post from the brand -->
+    <article class="x-t">
+      <span class="av sq" style="background:#111827;font-size:12px;border:1px solid #334155" data-ts-ring="NovaYieldApp">NY</span>
+      <div>
+        <div class="hd"><span class="nm">NovaYield</span><svg class="chk gold" viewBox="0 0 24 24"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg><span data-ts="NovaYieldApp"></span><span>@NovaYieldApp</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">11.5% APY. No lock-up. No fees. Join 200,000 savers who stopped settling for 4%. 👉 novayield.example</div>
+        <div class="media"><div class="img" style="background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;font-size:28px;font-weight:800;align-items:center;justify-content:center">11.5% APY</div></div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>96</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>1.2K</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>3.3K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>1.8M</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+        <div class="promoted"><svg viewBox="0 0 24 24"><path d="M19.5 2h-15C3.12 2 2 3.12 2 4.5v15C2 20.88 3.12 22 4.5 22h15c1.38 0 2.5-1.12 2.5-2.5v-15C22 3.12 20.88 2 19.5 2zM12 17l-5-5 1.41-1.41L12 14.17l3.59-3.58L17 12l-5 5z"/></svg>Ad</div>
+      </div>
+    </article>
+
+    <article class="x-t">
+      <span class="av" style="background:linear-gradient(135deg,#ec4899,#f59e0b)" data-ts-ring="cryptoqueen_official">CQ</span>
+      <div>
+        <div class="hd"><span class="nm">Crypto Queen 👑</span><svg class="chk" viewBox="0 0 24 24"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg><span data-ts="cryptoqueen_official"></span><span>@cryptoqueen_official · 5h</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">Turned $500 into $48,000 in 3 weeks 💎🙌 Not luck. A system. DM me "YIELD" and I'll send you the exact steps (first 50 only)</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>1.4K</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>2.2K</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>9.8K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>2.9M</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t" id="ex5">
+      <span class="av" style="background:linear-gradient(135deg,#a855f7,#6366f1)" data-ts-ring="lena_ml">L</span>
+      <div>
+        <div class="hd"><span class="nm">Lena Novak</span><span data-ts="lena_ml"></span><span>@lena_ml · 6h</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">First week as a PhD student 🎉 Anyone have reading recommendations on graph-based bot detection? Starting with SybilRank and working forward.</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>14</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>3</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>88</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>6.1K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t">
+      <span class="av sq" style="background:#0b3d91;font-size:11px" data-ts-ring="WireDesk">WD</span>
+      <div>
+        <div class="hd"><span class="nm">WireDesk</span><svg class="chk gold" viewBox="0 0 24 24"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg><span data-ts="WireDesk"></span><span>@WireDesk · 7h</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">Exclusive: inside the "savings app" paying 11.5% and the fintech behind it. By <b>@sarah_chen_wire</b>.</div>
+        <div class="media"><div class="img" style="background:linear-gradient(160deg,#0b3d91,#1e3a8a)">WireDesk investigation</div><div class="cap"><b>The 11.5% question</b>wiredesk.example</div></div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>402</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>2.6K</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>7.9K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>1.1M</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t">
+      <span class="av def" data-ts-ring="yield_hunter_pro"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+      <div>
+        <div class="ctx"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>Yield Hunter reposted</div>
+        <div class="hd"><span class="nm">Yield Hunter</span><span data-ts="yield_hunter_pro"></span><span>@yield_hunter_pro · 8h</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">Everyone sleeping on <b>@NovaYieldApp</b> right now is going to regret it in 12 months. 11.5% and it's LIQUID. 🚀🚀</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>9</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>412</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>530</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>210K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+
+    <article class="x-t">
+      <span class="av" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)" data-ts-ring="sarah_chen_wire">SC</span>
+      <div>
+        <div class="hd"><span class="nm">Sarah Chen</span><svg class="chk" viewBox="0 0 24 24"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg><span data-ts="sarah_chen_wire"></span><span>@sarah_chen_wire · 9h</span><span class="more"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></span></div>
+        <div class="tx">Reminder for tomorrow's story: if a "savings" product pays more than 3× the best insured rate, the extra is not interest. It is the price of a risk someone chose not to describe to you.</div>
+        <div class="acts"><span><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.005-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.951-1.08 3.163-3.13 3.163-5.36 0-3.39-2.744-6.13-6.129-6.13H9.756z"/></svg>188</span><span class="rt"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>1.5K</span><span class="lk"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>6.2K</span><span><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>720K</span><span class="right"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg></span></div>
+      </div>
+    </article>
+    <div class="x-showposts" style="border:0;padding:24px">Loading more posts…</div>
+  </main>
+
+  <aside class="x-right">
+    <div class="x-search"><div><svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z"/></svg>Search</div></div>
+
+    <!-- injected by the add-on -->
+    <div class="ts-widget ts-dark" id="ex-widget">
+      <div class="ts-brand"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.5v6c0 5 3.3 8.6 7.5 10 4.2-1.4 7.5-5 7.5-10v-6z"/><path d="m9 12 2 2 4-4"/></svg> Trust Score</b><span>this timeline</span></div>
+      <h3>12 accounts scored</h3>
+      <div class="ts-stack"><i class="ts-green" style="width:41.7%"></i><i class="ts-amber" style="width:16.7%"></i><i class="ts-red" style="width:41.7%"></i></div>
+      <ul>
+        <li><span><span class="ts-dot ts-green"></span>Likely genuine</span><b>5</b></li>
+        <li><span><span class="ts-dot ts-amber"></span>Uncertain</span><b>2</b></li>
+        <li><span><span class="ts-dot ts-red"></span>Bot-like</span><b>5</b></li>
+      </ul>
+      <div class="ts-alert">
+        <b>Bought-follower block #4 is active here.</b> 2,140 accounts that all follow the same 300 customers and nobody else. 3 of the replies under @sarah_chen_wire's post come from it; it also supplies 71% of @NovaYieldApp's followers and 92% of @BreakingAlerts_'s.
+        <div class="ts-list"><span>@maria_l_88231</span><span>@jake_saves2026</span><span>@happy_investor_4471</span><span>@yield_hunter_pro</span></div>
+      </div>
+    </div>
+
+    <div class="x-card"><h2>Subscribe to Premium</h2><div class="prem"><p>Subscribe to unlock new features and if eligible, receive a share of revenue.</p><span class="b">Subscribe</span></div></div>
+
+    <div class="x-card">
+      <h2>What's happening</h2>
+      <a class="trend" href="#"><div class="s">Business · Trending</div><div class="n">NovaYield</div><div class="s">48.2K posts</div></a>
+      <a class="trend" href="#"><div class="s">Trending in Finance</div><div class="n">#HYSA</div><div class="s">12.1K posts</div></a>
+      <a class="trend" href="#"><div class="s">Technology · Trending</div><div class="n">Graph neural networks</div><div class="s">5,204 posts</div></a>
+      <a class="trend" href="#"><div class="s">Trending</div><div class="n">FDIC</div><div class="s">31.6K posts</div></a>
+      <a class="more" href="#">Show more</a>
+    </div>
+
+    <div class="x-card">
+      <h2>Who to follow</h2>
+      <div class="row wf"><span class="av" style="background:linear-gradient(135deg,#f59e0b,#ef4444)" data-ts-ring="DataDrivenDan">DD</span><div class="who"><div class="nm">Dan Okafor<span data-ts="DataDrivenDan"></span></div><div class="hd">@DataDrivenDan</div></div><span class="fb">Follow</span></div>
+      <div class="row wf"><span class="av def" data-ts-ring="yield_hunter_pro"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span><div class="who"><div class="nm">Yield Hunter<span data-ts="yield_hunter_pro"></span></div><div class="hd">@yield_hunter_pro</div></div><span class="fb">Follow</span></div>
+      <div class="row wf"><span class="av" style="background:linear-gradient(135deg,#10b981,#3b82f6)" data-ts-ring="tomas_eng">T</span><div class="who"><div class="nm">Tomas Lindqvist<span data-ts="tomas_eng"></span></div><div class="hd">@tomas_eng</div></div><span class="fb">Follow</span></div>
+      <a class="more" href="#">Show more</a>
+    </div>
+    <div class="x-foot">Terms of Service · Privacy Policy · Cookie Policy · Accessibility · Ads info · More · © 2026 X Corp.</div>
+  </aside>
+</div>
+
+<script src="overlay.js"></script>
+<script>
+const BLOCK4 = ['Bought-follower block #4 · 2,140 accounts · 98% bot-like', 'ts-red'];
+const boughtFollower = (h, name, score, pbot, facts, why, neighbours, note) => ({
+  handle: '@' + h, sub: name + ' · ' + facts[0][1] + ' old', score, pbot, facts, why, neighbours,
+  flags: [BLOCK4, ['Follows the same 300 accounts as 2,139 others', 'ts-red']], note
+});
+
+TrustOverlay.init({
+  platformLabel: 'X', computedOn: '10 Sep 2026', dark: true,
+  how: `
+    <h2>How the trust score works</h2>
+    <p>The add-on never reads what an account posts. It scores <b>who the account is</b> (profile and activity pattern) and <b>where it sits in the network</b> (who follows it, whom it follows, who mentions and replies to it), then lets trust and distrust flow along those links.</p>
+    <h3>1. Own evidence (prior)</h3>
+    <p>A random-forest model on profile and activity features (account age, follower/following ratio, posts per day, default picture, has bio/URL/banner, screen-name entropy…) gives a first probability of being a bot.</p>
+    <h3>2. Network channels</h3>
+    <p>Each relation is a channel: <code>mutual follow</code> (strongest: both sides agreed), <code>followers</code> (who chose to follow this account), <code>following</code> (weak: anyone can follow anyone), <code>mentions &amp; replies</code>. Senders are damped by their degree so celebrities and mass-followers count less. Each channel gets a weight learned from labelled seed accounts.</p>
+    <h3>3. Propagation</h3>
+    <div class="ts-formula">r = (1 − α)·q + α·P·r &nbsp;&nbsp;&nbsp; trust = ½ − r</div>
+    <p><code>q</code> is the own evidence, <code>P</code> the weighted network, <code>α</code> how much the neighbourhood counts. The fixed point is unique, so every score splits exactly into a prior term plus one term per channel plus one term per neighbour. That split is what the popover shows.</p>
+    <h3>4. Clusters</h3>
+    <p>Independently, dense blocks of accounts that follow the same customers in lockstep (the bought-follower economy) and creation bursts are detected and shown as flags. Cluster membership is evidence, not a verdict.</p>
+    <h3>5. Seeds</h3>
+    <p>Trusted seeds: verified newsrooms and long-standing accounts vetted by hand. Distrusted seeds: published bot lists and suspended accounts.</p>
+    <p style="color:var(--ts-muted);font-size:12px">Scores are recomputed daily from public data. The score is a probability, not a judgement: an "uncertain" 58 means exactly that.</p>`,
+  accounts: {
+    sarah_chen_wire: {
+      handle: '@sarah_chen_wire', sub: 'Sarah Chen · Reporter, WireDesk · 12 years old', score: 0.96, pbot: 0.01,
+      facts: [['Account age', '12 y'], ['Followers', '184k'], ['Following', '2,310'], ['Mutual follows', '1,640'], ['Posts / day', '6.2'], ['Profile', 'bio · URL · banner']],
+      why: [
+        ['Own profile & activity', 0.17, '12-year account, complete profile, steady posting rhythm'],
+        ['Mutual follows', 0.16, '1,640 mutual follows, 92% with accounts scored ≥ 80'],
+        ['Followers', 0.06, 'followed by 41 verified newsrooms (damped: they follow many)'],
+        ['Following', 0.02, 'weak channel by design'],
+        ['Mentions & replies', 0.05, 'mentioned by trusted accounts far more than by bot-like ones'],
+        ['Coordination cluster', 0, 'not in any dense block'],
+      ],
+      neighbours: [['@WireDesk', 'mutual follow (seed: newsroom)', 0.98, 0.058], ['@DataDrivenDan', 'mutual follow + replies', 0.89, 0.031], ['@maria_l_88231', 'replied to this account', 0.04, -0.002]],
+      flags: [['Consistent history since 2014', 'ts-green']],
+      note: 'Being replied to by bought followers costs almost nothing: replies from low-degree bot-like accounts are damped and the channel weight for inbound replies is small.',
+    },
+    WireDesk: {
+      handle: '@WireDesk', sub: 'WireDesk · verified organisation · trusted seed', score: 0.98, pbot: 0.01,
+      facts: [['Account age', '15 y'], ['Followers', '3.1M'], ['Following', '410'], ['Mutual follows', '388'], ['Posts / day', '48'], ['Profile', 'bio · URL · banner']],
+      why: [['Own profile & activity', 0.32, 'trusted seed: vetted newsroom (fixed prior, not learned)'], ['Mutual follows', 0.10, ''], ['Followers', 0.03, 'damped: millions of followers'], ['Following', 0.01, ''], ['Mentions & replies', 0.02, ''], ['Coordination cluster', 0, '']],
+      neighbours: [['@sarah_chen_wire', 'mutual follow', 0.96, 0.024], ['@apnews_style_org', 'mutual follow (seed)', 0.99, 0.021]],
+      flags: [['Seed: vetted newsroom', 'ts-green']],
+    },
+    DataDrivenDan: {
+      handle: '@DataDrivenDan', sub: 'Dan Okafor · 7 years old', score: 0.89, pbot: 0.03,
+      facts: [['Account age', '7 y 2 m'], ['Followers', '22k'], ['Following', '1,180'], ['Mutual follows', '840'], ['Posts / day', '3.4'], ['Profile', 'bio · URL']],
+      why: [['Own profile & activity', 0.15, ''], ['Mutual follows', 0.14, '840 mutual follows, mostly with accounts scored ≥ 80'], ['Followers', 0.04, ''], ['Following', 0.02, ''], ['Mentions & replies', 0.04, ''], ['Coordination cluster', 0, '']],
+      neighbours: [['@sarah_chen_wire', 'mutual follow + replies', 0.96, 0.036], ['@tomas_eng', 'mutual follow', 0.81, 0.019], ['@lena_ml', 'replied to this account', 0.58, 0.002]],
+      flags: [],
+    },
+    tomas_eng: {
+      handle: '@tomas_eng', sub: 'Tomas Lindqvist · 9 years old', score: 0.81, pbot: 0.07,
+      facts: [['Account age', '9 y'], ['Followers', '4,120'], ['Following', '890'], ['Mutual follows', '610'], ['Posts / day', '1.9'], ['Profile', 'bio · URL']],
+      why: [['Own profile & activity', 0.13, ''], ['Mutual follows', 0.12, ''], ['Followers', 0.03, ''], ['Following', 0.01, ''], ['Mentions & replies', 0.02, ''], ['Coordination cluster', 0, '']],
+      neighbours: [['@DataDrivenDan', 'mutual follow', 0.89, 0.028], ['@lena_ml', 'mutual follow', 0.58, 0.004]],
+      flags: [],
+    },
+    lena_ml: {
+      handle: '@lena_ml', sub: 'Lena Novak · 3 weeks old · little network data', score: 0.58, pbot: 0.39,
+      facts: [['Account age', '3 w'], ['Followers', '61'], ['Following', '140'], ['Mutual follows', '22'], ['Posts / day', '0.9'], ['Profile', 'bio · URL']],
+      why: [
+        ['Own profile & activity', 0.02, 'brand-new but complete profile, human posting rhythm'],
+        ['Mutual follows', 0.05, '22 mutual follows, 18 with accounts scored ≥ 80 (small numbers)'],
+        ['Followers', 0.01, ''],
+        ['Following', 0, ''],
+        ['Mentions & replies', 0, 'almost none yet'],
+        ['Coordination cluster', 0, 'not in any dense block'],
+      ],
+      neighbours: [['@tomas_eng', 'mutual follow', 0.81, 0.011], ['@DataDrivenDan', 'this account replied to it', 0.89, 0.006]],
+      flags: [['Little network data (3-week-old account)', 'ts-amber']],
+      note: 'A young account with a handful of genuine mutual follows: the score leans positive but stays "uncertain" until there is more evidence.',
+    },
+    NovaYieldApp: {
+      handle: '@NovaYieldApp', sub: 'NovaYield · verified organisation · 14 months old', score: 0.44, pbot: 0.54,
+      facts: [['Account age', '1 y 2 m'], ['Followers', '203k'], ['Following', '312'], ['Mutual follows', '140'], ['Posts / day', '4.1'], ['Profile', 'bio · URL · banner']],
+      why: [
+        ['Own profile & activity', 0.06, 'the account itself behaves like a normal brand account'],
+        ['Mutual follows', 0.03, '140 mutual follows, mostly genuine'],
+        ['Followers', -0.12, '71% of followers are in bought-follower block #4'],
+        ['Following', 0, ''],
+        ['Mentions & replies', -0.03, 'most mentions come from block #4 accounts'],
+        ['Coordination cluster', 0, 'not itself in the block'],
+      ],
+      neighbours: [['@maria_l_88231', 'follower + replies', 0.04, -0.019], ['@yield_hunter_pro', 'follower + mentions (31×)', 0.09, -0.017], ['@sarah_chen_wire', 'mentioned this account', 0.96, 0.006]],
+      flags: [['71% of followers in a bought-follower block', 'ts-red']],
+      note: 'The account looks normal; its audience does not. Bought followers are damped individually, but 144,000 of them add up.',
+    },
+    BreakingAlerts_: {
+      handle: '@BreakingAlerts_', sub: 'Breaking Alerts · 3 days old', score: 0.21, pbot: 0.79,
+      facts: [['Account age', '3 d'], ['Followers', '41.2k'], ['Following', '18'], ['Mutual follows', '0'], ['Posts / day', '92'], ['Profile', 'no bio · no URL']],
+      why: [
+        ['Own profile & activity', -0.14, '3-day-old account, 92 posts/day, 41k followers vs 18 following'],
+        ['Mutual follows', 0, 'none at all'],
+        ['Followers', -0.11, '92% of followers are in bought-follower block #4, gained in 48 h'],
+        ['Following', -0.01, ''],
+        ['Mentions & replies', -0.03, 'amplified by block #4 reposts, replied to by nobody trusted'],
+        ['Coordination cluster', 0, 'customer of the block, not a member'],
+      ],
+      neighbours: [['@jake_saves2026', 'follower + repost', 0.06, -0.014], ['@happy_investor_4471', 'follower + repost', 0.05, -0.013], ['@maria_l_88231', 'follower', 0.04, -0.012]],
+      flags: [['Follower spike: +41k in 48 h', 'ts-red'], ['Blue check bought 3 days ago', 'ts-amber']],
+      note: '8,100 reposts and a blue check, and still 21: reach and verification are not evidence of a person.',
+    },
+    cryptoqueen_official: {
+      handle: '@cryptoqueen_official', sub: 'Crypto Queen · 5 months old', score: 0.13, pbot: 0.88,
+      facts: [['Account age', '5 m'], ['Followers', '88k'], ['Following', '4,990'], ['Mutual follows', '210'], ['Posts / day', '31'], ['Profile', 'bio · URL']],
+      why: [
+        ['Own profile & activity', -0.16, '31 posts/day, follows 4,990 (mass-follow pattern)'],
+        ['Mutual follows', -0.06, '210 mutual follows, 190 of them bot-like'],
+        ['Followers', -0.09, '64% of followers in block #4, rest in block #7'],
+        ['Following', -0.02, ''],
+        ['Mentions & replies', -0.04, ''],
+        ['Coordination cluster', 0, ''],
+      ],
+      neighbours: [['@yield_hunter_pro', 'mutual follow', 0.09, -0.017], ['@moon_signals_x', 'mutual follow + replies', 0.07, -0.015]],
+      flags: [['Mass-following (4,990)', 'ts-red'], ['64% of followers in a bought-follower block', 'ts-red']],
+    },
+    yield_hunter_pro: {
+      handle: '@yield_hunter_pro', sub: 'Yield Hunter · 4 months old', score: 0.09, pbot: 0.92,
+      facts: [['Account age', '4 m'], ['Followers', '312'], ['Following', '300'], ['Mutual follows', '4'], ['Posts / day', '19'], ['Profile', 'default picture · no bio']],
+      why: [
+        ['Own profile & activity', -0.18, 'default picture, no bio, 19 posts/day (mostly reposts)'],
+        ['Mutual follows', -0.02, '4 mutual follows, all bot-like'],
+        ['Followers', -0.06, '312 followers, all from block #4'],
+        ['Following', -0.05, 'follows exactly the 300 customer accounts of block #4'],
+        ['Mentions & replies', -0.04, 'mentions @NovaYieldApp 31 times, never replied to by anyone trusted'],
+        ['Coordination cluster', -0.06, 'bought-follower block #4'],
+      ],
+      neighbours: [['@maria_l_88231', 'same 300 followees', 0.04, -0.021], ['@NovaYieldApp', 'follows + mentions', 0.44, -0.004], ['@cryptoqueen_official', 'mutual follow', 0.13, -0.015]],
+      flags: [BLOCK4, ['Suggested to you by X despite scoring 9', 'ts-amber']],
+      note: 'It sits in the "Who to follow" box: recommendation systems reward activity, not authenticity.',
+    },
+    maria_l_88231: boughtFollower('maria_l_88231', 'Maria L.', 0.04, 0.97,
+      [['Account age', '2 m'], ['Followers', '3'], ['Following', '300'], ['Mutual follows', '0'], ['Posts / day', '0.4 (all replies)'], ['Profile', 'default picture · no bio']],
+      [['Own profile & activity', -0.20, 'default picture, no bio, screen name with 5 trailing digits, follows 300 / followed by 3'],
+       ['Mutual follows', 0, 'none'],
+       ['Followers', -0.02, '3 followers, all in block #4'],
+       ['Following', -0.09, 'follows exactly the same 300 accounts as 2,139 other accounts'],
+       ['Mentions & replies', -0.08, 'only ever replies to threads criticising its 300 followees'],
+       ['Coordination cluster', -0.07, 'bought-follower block #4']],
+      [['@jake_saves2026', 'same 300 followees', 0.06, -0.028], ['@happy_investor_4471', 'same 300 followees', 0.05, -0.027], ['@NovaYieldApp', 'follows + replies', 0.44, -0.003]],
+      'Score 4: everything about this account is shared with 2,139 others, including the 300 accounts it follows.'),
+    jake_saves2026: boughtFollower('jake_saves2026', 'Jake 💰', 0.06, 0.96,
+      [['Account age', '2 m'], ['Followers', '5'], ['Following', '300'], ['Mutual follows', '0'], ['Posts / day', '0.5 (all replies)'], ['Profile', 'default picture · no bio']],
+      [['Own profile & activity', -0.19, ''], ['Mutual follows', 0, ''], ['Followers', -0.02, ''], ['Following', -0.09, 'same 300 followees as the block'], ['Mentions & replies', -0.07, ''], ['Coordination cluster', -0.07, 'bought-follower block #4']],
+      [['@maria_l_88231', 'same 300 followees', 0.04, -0.028], ['@BreakingAlerts_', 'follows + reposts', 0.21, -0.006]]),
+    happy_investor_4471: boughtFollower('happy_investor_4471', 'Happy Investor', 0.05, 0.96,
+      [['Account age', '2 m'], ['Followers', '2'], ['Following', '300'], ['Mutual follows', '0'], ['Posts / day', '0.3 (all replies)'], ['Profile', 'default picture · no bio']],
+      [['Own profile & activity', -0.20, ''], ['Mutual follows', 0, ''], ['Followers', -0.02, ''], ['Following', -0.09, 'same 300 followees as the block'], ['Mentions & replies', -0.07, ''], ['Coordination cluster', -0.07, 'bought-follower block #4']],
+      [['@maria_l_88231', 'same 300 followees', 0.04, -0.028], ['@jake_saves2026', 'same 300 followees', 0.06, -0.027]]),
+  }
+});
+</script>
+</body>
+</html>

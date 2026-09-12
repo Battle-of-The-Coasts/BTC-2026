@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Has anyone actually used NovaYield? 11.5% APY on cash sounds too good : r/personalfinance</title>
+<link rel="stylesheet" href="overlay.css">
+<style>
+  /* ---------- a faithful-enough clone of Reddit's 2025 web UI ---------- */
+  :root {
+    --rd-bg: #ffffff; --rd-bg2: #f6f8f9; --rd-line: #e5ebee; --rd-ink: #181c1f; --rd-muted: #5c6c74;
+    --rd-orange: #d93a00; --rd-blue: #6a5cff; --rd-up: #d93a00; --rd-down: #6a5cff; --rd-link: #0079d3;
+    --rd-font: "Reddit Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--rd-bg); color: var(--rd-ink); font: 14px/1.45 var(--rd-font); }
+  a { color: inherit; text-decoration: none; }
+
+  /* top nav */
+  .rd-nav { position: sticky; top: 0; z-index: 400; height: 56px; background: var(--rd-bg); border-bottom: 1px solid var(--rd-line); display: flex; align-items: center; padding: 0 16px; gap: 12px; }
+  .rd-logo { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 22px; letter-spacing: -.03em; color: var(--rd-orange); }
+  .rd-logo .snoo { width: 32px; height: 32px; border-radius: 50%; background: var(--rd-orange); display: inline-flex; align-items: center; justify-content: center; }
+  .rd-logo .snoo svg { width: 22px; height: 22px; }
+  .rd-search { flex: 1; max-width: 700px; margin: 0 auto; height: 40px; border-radius: 999px; background: #eaedef; display: flex; align-items: center; padding: 0 14px; gap: 8px; color: var(--rd-muted); }
+  .rd-search svg { width: 18px; height: 18px; }
+  .rd-nav .right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .rd-icon-btn { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--rd-ink); }
+  .rd-icon-btn:hover { background: #eaedef; }
+  .rd-icon-btn svg { width: 20px; height: 20px; }
+  .rd-pill { height: 40px; border-radius: 999px; background: #eaedef; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; font-weight: 600; font-size: 14px; }
+  .rd-pill svg { width: 18px; height: 18px; }
+  .rd-me { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #ff8717, #ffb000); }
+
+  /* layout */
+  .rd-shell { display: grid; grid-template-columns: 270px minmax(0, 1fr); max-width: 1400px; margin: 0 auto; }
+  .rd-side { border-right: 1px solid var(--rd-line); padding: 12px 16px; position: sticky; top: 56px; height: calc(100vh - 56px); overflow: auto; font-size: 14px; }
+  .rd-side .grp { padding: 8px 0 6px; border-bottom: 1px solid var(--rd-line); margin-bottom: 8px; }
+  .rd-side .grp h6 { margin: 0 0 4px 12px; font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--rd-muted); }
+  .rd-side .it { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 8px; }
+  .rd-side .it:hover { background: #eaedef; }
+  .rd-side .it svg { width: 20px; height: 20px; }
+  .rd-side .it .ci { width: 24px; height: 24px; border-radius: 50%; }
+  .rd-main { display: grid; grid-template-columns: minmax(0, 1fr) 316px; gap: 24px; padding: 16px 24px 80px; }
+  @media (max-width: 1100px) { .rd-shell { grid-template-columns: 1fr; } .rd-side { display: none; } }
+  @media (max-width: 860px) { .rd-main { grid-template-columns: 1fr; } .rd-right { order: -1; } }
+
+  /* post */
+  .rd-post { max-width: 760px; }
+  .rd-post .head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--rd-muted); }
+  .rd-post .head .back { width: 32px; height: 32px; border-radius: 50%; background: #eaedef; display: inline-flex; align-items: center; justify-content: center; margin-right: 4px; }
+  .rd-post .head .back svg { width: 16px; height: 16px; }
+  .rd-ci { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14px; }
+  .rd-post .head b { color: var(--rd-ink); font-weight: 600; }
+  .rd-post .head .join { margin-left: 4px; background: var(--rd-blue); color: #fff; padding: 5px 12px; border-radius: 999px; font-weight: 600; }
+  .rd-post h1 { font-size: 24px; line-height: 1.25; margin: 10px 0 6px; font-weight: 600; letter-spacing: -.01em; }
+  .rd-flair { display: inline-block; font-size: 12px; font-weight: 600; background: #dcf1ff; color: #0f4c81; padding: 2px 8px; border-radius: 999px; margin: 2px 0 8px; }
+  .rd-post .body { font-size: 14px; line-height: 1.55; color: #2a3236; }
+  .rd-post .body p { margin: 0 0 10px; }
+  .rd-actions { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; }
+  .rd-vote { display: inline-flex; align-items: center; border-radius: 999px; background: #eaedef; height: 32px; font-weight: 600; font-size: 13px; }
+  .rd-vote button { border: 0; background: transparent; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--rd-ink); }
+  .rd-vote button:hover { background: #dfe3e6; }
+  .rd-vote button svg { width: 16px; height: 16px; }
+  .rd-vote button.up:hover { color: var(--rd-up); } .rd-vote button.down:hover { color: var(--rd-down); }
+  .rd-act { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: #eaedef; font-weight: 600; font-size: 13px; }
+  .rd-act svg { width: 16px; height: 16px; }
+
+  /* comments */
+  .rd-compose { border: 1px solid #c9d1d6; border-radius: 20px; padding: 10px 14px; color: var(--rd-muted); margin: 14px 0; }
+  .rd-sort { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--rd-muted); margin: 6px 0 14px; }
+  .rd-sort b { color: var(--rd-ink); font-weight: 600; }
+  .rd-c { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 8px; position: relative; }
+  .rd-c .av { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; position: relative; z-index: 1; }
+  .rd-c .av.def { background: #d7dde2; color: #7a8a94; }
+  .rd-c .av.def svg { width: 20px; height: 20px; }
+  .rd-c .meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--rd-muted); min-height: 32px; flex-wrap: wrap; }
+  .rd-c .meta .u { font-weight: 600; color: var(--rd-ink); }
+  .rd-c .meta .op { background: #dcf1ff; color: #0f4c81; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .rd-c .meta .mod { background: #e2f6e9; color: #0f6b3a; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .rd-c .meta .app { background: #eaedef; color: #5c6c74; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .rd-c .txt { font-size: 14px; line-height: 1.5; color: #2a3236; padding-right: 8px; }
+  .rd-c .txt p { margin: 0 0 8px; }
+  .rd-c .txt p:last-child { margin: 0; }
+  .rd-c .txt.removed { color: var(--rd-muted); font-style: italic; }
+  .rd-c .row { display: flex; align-items: center; gap: 4px; margin: 4px 0 10px; }
+  .rd-c .row .rd-vote { background: transparent; height: 28px; }
+  .rd-c .row .rd-vote button { width: 28px; height: 28px; }
+  .rd-c .row .rd-act { background: transparent; height: 28px; padding: 0 8px; font-size: 12px; color: var(--rd-ink); }
+  .rd-c .row .rd-act:hover, .rd-c .row .rd-vote button:hover { background: #eaedef; }
+  .rd-c .kids { grid-column: 2; position: relative; padding-left: 0; }
+  .rd-c .kids::before { content: ""; position: absolute; left: -24px; top: -6px; bottom: 14px; width: 1.5px; background: #dfe5e9; }
+  .rd-c .thread-btn { position: absolute; left: 8px; top: 36px; width: 16px; height: 16px; border-radius: 50%; border: 1px solid #c9d1d6; background: #fff; font-size: 10px; display: flex; align-items: center; justify-content: center; color: var(--rd-muted); z-index: 2; }
+  .rd-load { color: var(--rd-link); font-size: 12px; font-weight: 600; margin: 4px 0 12px 40px; }
+
+  /* right rail */
+  .rd-right { position: sticky; top: 72px; align-self: start; }
+  .rd-card { background: var(--rd-bg2); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; font-size: 13px; }
+  .rd-card h3 { margin: 0 0 6px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .rd-card h6 { margin: 12px 0 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--rd-muted); font-weight: 600; }
+  .rd-card .stats { display: flex; gap: 22px; margin: 8px 0; }
+  .rd-card .stats b { display: block; font-size: 15px; }
+  .rd-card .stats span { color: var(--rd-muted); font-size: 11px; }
+  .rd-card ol { margin: 0; padding-left: 18px; }
+  .rd-card ol li { padding: 4px 0; border-bottom: 1px solid var(--rd-line); }
+  .rd-card ol li:last-child { border: 0; }
+  .rd-card .mods a { display: block; padding: 3px 0; color: var(--rd-link); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- ============ add-on banner (only in this mock-up: explains what the extension adds) ============ -->
+<div class="ts-banner">
+  <div class="ts-bar-in">
+    <span class="ts-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.5v6c0 5 3.3 8.6 7.5 10 4.2-1.4 7.5-5 7.5-10v-6z"/><path d="m9 12 2 2 4-4"/></svg> Trust Score</span>
+    <span style="color:#94a3b8">mock-up · what the browser add-on adds to a Reddit thread</span>
+    <span class="ts-legend">
+      <span class="ts-badge ts-green"><span class="ts-num">70–100</span></span> likely genuine
+      <span class="ts-badge ts-amber"><span class="ts-num">40–69</span></span> uncertain
+      <span class="ts-badge ts-red"><span class="ts-num">0–39</span></span> bot-like
+      <span class="ts-badge ts-grey"><span class="ts-num">n/a</span></span> not scored
+    </span>
+    <span class="ts-spacer"></span>
+    <button class="ts-btn" data-ts-guide>Hide guide</button>
+    <button class="ts-btn" data-ts-how>How does it work?</button>
+    <a class="ts-btn" href="twitter.html">See the X / Twitter version →</a>
+    <label class="ts-switch"><span>Overlay ON</span><i></i></label>
+  </div>
+</div>
+<div class="ts-guide">
+    <div class="ts-guide-in">
+      <div class="ts-g-intro"><b>What you are looking at.</b> A normal Reddit thread. The add-on adds one <b>shield badge</b> next to every username (a trust score from 0 to 100 computed from the account's profile and its position in the reply / co-comment / co-subreddit graph, never from what it writes) plus a summary card in the right rail. Hover or click any badge for the full explanation. Flip the switch to see the page without the add-on.</div>
+      <div class="ts-g-card"><h5><span class="ts-g-n">1</span>A long-standing regular</h5><p>u/kira_ledger: 8-year account, replied to by hundreds of trusted accounts. Scores 94.</p><button class="ts-btn" data-ts-jump="ex1">Show me</button></div>
+      <div class="ts-g-card"><h5><span class="ts-g-n">2</span>A coordinated cluster</h5><p>Six accounts all created on 3 June 2026, praising the same product within 11 minutes. Each scores under 20.</p><button class="ts-btn" data-ts-jump="ex2">Show me</button></div>
+      <div class="ts-g-card"><h5><span class="ts-g-n">3</span>Normal account, fake audience</h5><p>The brand's own account looks fine, but 78 % of the replies it receives come from that cluster. Scores 44: uncertain.</p><button class="ts-btn" data-ts-jump="ex3">Show me</button></div>
+      <div class="ts-g-card"><h5><span class="ts-g-n">4</span>Not enough data / not scored</h5><p>A quiet meme account gets an honest "uncertain" 52; AutoModerator is a declared bot and is not scored at all.</p><button class="ts-btn" data-ts-jump="ex4">Show me</button></div>
+    </div>
+</div>
+
+<!-- ============ Reddit page ============ -->
+<nav class="rd-nav">
+  <a class="rd-logo" href="#"><span class="snoo"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="13.5" r="6.5"/><circle cx="17.5" cy="6" r="1.6"/><circle cx="6" cy="10" r="1.4"/><circle cx="18" cy="10" r="1.4"/><circle cx="9.6" cy="13" r="1" fill="#d93a00"/><circle cx="14.4" cy="13" r="1" fill="#d93a00"/><path d="M9.3 16.2c1.5 1.2 3.9 1.2 5.4 0" stroke="#d93a00" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M12 7l1.3-3.6 3.5.9" stroke="#fff" stroke-width="1" fill="none"/></svg></span>reddit</a>
+  <div class="rd-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search Reddit</div>
+  <div class="right">
+    <span class="rd-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Get app</span>
+    <a class="rd-icon-btn" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>
+    <span class="rd-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Create</span>
+    <a class="rd-icon-btn" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></a>
+    <span class="rd-me"></span>
+  </div>
+</nav>
+
+<div class="rd-shell">
+  <aside class="rd-side">
+    <div class="grp">
+      <a class="it" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 3l9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Home</a>
+      <a class="it" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17 9 11l4 4 8-8"/><path d="M14 7h7v7"/></svg>Popular</a>
+      <a class="it" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 6-4 2 2-6z"/></svg>Explore</a>
+      <a class="it" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>All</a>
+    </div>
+    <div class="grp">
+      <h6>Recent</h6>
+      <a class="it" href="#"><span class="ci" style="background:#0f9d58"></span>r/personalfinance</a>
+      <a class="it" href="#"><span class="ci" style="background:#ff4500"></span>r/technology</a>
+      <a class="it" href="#"><span class="ci" style="background:#3b82f6"></span>r/dataisbeautiful</a>
+    </div>
+    <div class="grp">
+      <h6>Communities</h6>
+      <a class="it" href="#"><span class="ci" style="background:#0f9d58"></span>r/personalfinance</a>
+      <a class="it" href="#"><span class="ci" style="background:#8b5cf6"></span>r/Bogleheads</a>
+      <a class="it" href="#"><span class="ci" style="background:#f59e0b"></span>r/povertyfinance</a>
+      <a class="it" href="#"><span class="ci" style="background:#ef4444"></span>r/Scams</a>
+      <a class="it" href="#"><span class="ci" style="background:#06b6d4"></span>r/MachineLearning</a>
+      <a class="it" href="#"><span class="ci" style="background:#64748b"></span>r/boston</a>
+    </div>
+    <div class="grp">
+      <h6>Resources</h6>
+      <a class="it" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>About Reddit</a>
+      <a class="it" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H7l-3 3z"/></svg>Help</a>
+      <a class="it" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7z"/></svg>Content Policy</a>
+    </div>
+  </aside>
+
+  <div class="rd-main">
+    <main>
+      <article class="rd-post">
+        <div class="head">
+          <span class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 5-7 7 7 7"/></svg></span>
+          <span class="rd-ci" style="background:#0f9d58">pf</span>
+          <b>r/personalfinance</b> • 5h
+          <span class="join">Joined</span>
+          <span style="margin-left:auto">•••</span>
+        </div>
+        <div class="head" style="margin-top:6px;gap:4px">
+          Posted by <span class="u" style="font-weight:600;color:var(--rd-ink)">u/throwaway_saver22</span><span data-ts="throwaway_saver22"></span>
+        </div>
+        <h1>Has anyone actually used NovaYield? They promise 11.5% APY on "cash" with no lock-up. Sounds too good.</h1>
+        <span class="rd-flair">Saving</span>
+        <div class="body">
+          <p>I keep seeing ads for NovaYield everywhere. They call it a "high-yield cash account", 11.5% APY, withdraw anytime, no fees. My HYSA is at 4.1%.</p>
+          <p>The site says deposits are "held with partner institutions" but I can't find which ones, and there's no FDIC logo anywhere. The reviews on their site are all 5 stars.</p>
+          <p>Is this legit or am I about to learn an expensive lesson? Has anyone here actually deposited money and withdrawn it?</p>
+        </div>
+        <div class="rd-actions">
+          <span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>2.3k<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span>
+          <span class="rd-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>486</span>
+          <span class="rd-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 7l4-4 4 4M5 21h14"/></svg>Share</span>
+          <span class="rd-act">•••</span>
+        </div>
+      </article>
+
+      <div class="rd-compose">Join the conversation</div>
+      <div class="rd-sort">Sort by: <b>Best ▾</b> &nbsp;&nbsp; Search comments</div>
+
+      <!-- ===== AutoModerator ===== -->
+      <div class="rd-c" id="ex4b">
+        <span class="av" style="background:#0079d3"><svg viewBox="0 0 24 24" fill="#fff" width="20" height="20"><rect x="5" y="8" width="14" height="10" rx="2"/><circle cx="9.5" cy="13" r="1.3" fill="#0079d3"/><circle cx="14.5" cy="13" r="1.3" fill="#0079d3"/><path d="M12 4v4" stroke="#fff" stroke-width="2"/></svg></span>
+        <div>
+          <div class="meta"><span class="u">AutoModerator</span><span class="mod">MOD</span><span class="app">APP</span><span data-ts="AutoModerator"></span>• 5h • <span>Stickied comment</span></div>
+          <div class="txt"><p>You may find these links helpful: <a style="color:var(--rd-link)">Savings & Emergency Funds</a>, <a style="color:var(--rd-link)">Scams and fraud</a>. <em>I am a bot, and this action was performed automatically.</em></p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>1<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span></div>
+        </div>
+      </div>
+
+      <!-- ===== 1: kira_ledger ===== -->
+      <div class="rd-c" id="ex1">
+        <span class="av" style="background:linear-gradient(135deg,#0f9d58,#34d399)" data-ts-ring="kira_ledger">K</span>
+        <div>
+          <div class="meta"><span class="u">kira_ledger</span><span data-ts="kira_ledger"></span>• 5h<span class="ts-callout"><b>1</b> long-standing regular · hover the badge</span></div>
+          <div class="txt">
+            <p>11.5% on "cash" is not a savings account, it's an unregistered lending product with a savings-account costume. There is no bank on earth paying 11.5% on demand deposits right now.</p>
+            <p>Three things to check before you send a cent: (1) is the entity a bank or partnered with a named FDIC-member bank, (2) who holds the money in custody, (3) what generates the yield. If the answer to any of those is "trust us", it's a no.</p>
+          </div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>1.4k<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+
+          <div class="kids">
+            <div class="rd-c">
+              <span class="av" style="background:linear-gradient(135deg,#1d4ed8,#60a5fa)" data-ts-ring="dan_the_accountant">D</span>
+              <div>
+                <div class="meta"><span class="u">dan_the_accountant</span><span data-ts="dan_the_accountant"></span>• 4h</div>
+                <div class="txt"><p>Adding to this: their terms of service (section 7) say your funds are "allocated to yield-generating strategies including private credit". That's the yield. You are an unsecured lender to whoever they lend to.</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>612<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+                <div class="kids">
+                  <div class="rd-c">
+                    <span class="av" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)" data-ts-ring="throwaway_saver22">T</span>
+                    <div>
+                      <div class="meta"><span class="u">throwaway_saver22</span><span class="op">OP</span><span data-ts="throwaway_saver22"></span>• 4h</div>
+                      <div class="txt"><p>Thanks both, this is exactly what I needed. Staying in my boring HYSA.</p></div>
+                      <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>203<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- cluster member replying inside a genuine thread -->
+            <div class="rd-c" id="ex2">
+              <span class="av def" data-ts-ring="SunnyDaysAhead_77"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+              <div>
+                <div class="meta"><span class="u">SunnyDaysAhead_77</span><span data-ts="SunnyDaysAhead_77"></span>• 3h<span class="ts-callout"><b>2</b> coordinated cluster · 6 accounts created the same day</span></div>
+                <div class="txt"><p>I've been with them 3 months, payouts on time every single week 🙌 People here are so negative about anything new. Do your own research!</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−41<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+                <div class="kids">
+                  <div class="rd-c">
+                    <span class="av" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" data-ts-ring="old_school_saver">O</span>
+                    <div>
+                      <div class="meta"><span class="u">old_school_saver</span><span data-ts="old_school_saver"></span>• 3h</div>
+                      <div class="txt"><p>Your account is three months old and every single comment you've made is about NovaYield.</p></div>
+                      <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>388<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+                      <div class="kids">
+                        <div class="rd-c">
+                          <span class="av def" data-ts-ring="Marcus_T_Invests"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+                          <div>
+                            <div class="meta"><span class="u">Marcus_T_Invests</span><span data-ts="Marcus_T_Invests"></span>• 3h</div>
+                            <div class="txt"><p>Not everyone who likes a product is a bot lol. Been using it since June, zero issues, withdrew $2k last week no problem.</p></div>
+                            <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−27<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== moderator ===== -->
+      <div class="rd-c">
+        <span class="av" style="background:linear-gradient(135deg,#0f6b3a,#22c55e)" data-ts-ring="pf_mod_alice">A</span>
+        <div>
+          <div class="meta"><span class="u" style="color:#0f6b3a">pf_mod_alice</span><span class="mod">MOD</span><span data-ts="pf_mod_alice"></span>• 3h</div>
+          <div class="txt"><p>Reminder: referral codes and affiliate links are not allowed here. Several comments have been removed. We are also seeing an unusual number of brand-new accounts in this thread; reports are appreciated.</p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>954<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+        </div>
+      </div>
+
+      <!-- ===== cluster: top-level ===== -->
+      <div class="rd-c">
+        <span class="av def" data-ts-ring="FinFreedom2026"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+        <div>
+          <div class="meta"><span class="u">FinFreedom2026</span><span data-ts="FinFreedom2026"></span>• 3h</div>
+          <div class="txt removed"><p>[removed by moderator]</p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−63<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+          <div class="kids">
+            <div class="rd-c">
+              <span class="av def" data-ts-ring="quietbloom_04"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+              <div>
+                <div class="meta"><span class="u">quietbloom_04</span><span data-ts="quietbloom_04"></span>• 3h</div>
+                <div class="txt"><p>Same!! customer support answered me in like 5 min too, really responsive team 💚</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−34<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+              </div>
+            </div>
+            <div class="rd-c">
+              <span class="av def" data-ts-ring="ravi_k_saves"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+              <div>
+                <div class="meta"><span class="u">ravi_k_saves</span><span data-ts="ravi_k_saves"></span>• 3h</div>
+                <div class="txt"><p>Can confirm. I moved my whole emergency fund there in July, already earned $340.</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−52<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+                <div class="kids">
+                  <div class="rd-c">
+                    <span class="av" style="background:linear-gradient(135deg,#db2777,#f472b6)" data-ts-ring="tessa_writes_code">T</span>
+                    <div>
+                      <div class="meta"><span class="u">tessa_writes_code</span><span data-ts="tessa_writes_code"></span>• 2h</div>
+                      <div class="txt"><p>Please, please do not put an emergency fund into an uninsured product. The whole point of an emergency fund is that it is there in an emergency.</p></div>
+                      <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>271<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="rd-c">
+              <span class="av def" data-ts-ring="Bright_Penny_"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+              <div>
+                <div class="meta"><span class="u">Bright_Penny_</span><span data-ts="Bright_Penny_"></span>• 3h</div>
+                <div class="txt"><p>Tried it, works great 👍</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−19<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 3: the brand account ===== -->
+      <div class="rd-c" id="ex3">
+        <span class="av" style="background:#111827;font-size:11px" data-ts-ring="NovaYield_Official">NY</span>
+        <div>
+          <div class="meta"><span class="u">NovaYield_Official</span><span data-ts="NovaYield_Official"></span>• 2h<span class="ts-callout"><b>3</b> normal-looking account, audience is the cluster</span></div>
+          <div class="txt"><p>Hi all, NovaYield team here 👋 We understand the skepticism. Customer deposits are held with regulated partner institutions and yields come from a diversified portfolio of short-duration credit. Happy to answer questions in DMs.</p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−118<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+          <div class="kids">
+            <div class="rd-c">
+              <span class="av" style="background:linear-gradient(135deg,#0f9d58,#34d399)" data-ts-ring="kira_ledger">K</span>
+              <div>
+                <div class="meta"><span class="u">kira_ledger</span><span data-ts="kira_ledger"></span>• 2h</div>
+                <div class="txt"><p>Which partner institutions? Name one. Your website, your terms and your app all say "partner institutions" and never once name a bank.</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>540<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+              </div>
+            </div>
+            <div class="rd-c">
+              <span class="av def" data-ts-ring="SunnyDaysAhead_77"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+              <div>
+                <div class="meta"><span class="u">SunnyDaysAhead_77</span><span data-ts="SunnyDaysAhead_77"></span>• 2h</div>
+                <div class="txt"><p>Thank you for being transparent! 🙏 Love the app.</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−46<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 4: uncertain ===== -->
+      <div class="rd-c" id="ex4">
+        <span class="av" style="background:linear-gradient(135deg,#64748b,#94a3b8)" data-ts-ring="JustHere4Memes">J</span>
+        <div>
+          <div class="meta"><span class="u">JustHere4Memes</span><span data-ts="JustHere4Memes"></span>• 2h<span class="ts-callout"><b>4</b> too little data → honest "uncertain"</span></div>
+          <div class="txt"><p>12% and no lock-up? sir this is a ponzi 💀</p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>129<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+        </div>
+      </div>
+
+      <div class="rd-c">
+        <span class="av" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" data-ts-ring="old_school_saver">O</span>
+        <div>
+          <div class="meta"><span class="u">old_school_saver</span><span data-ts="old_school_saver"></span>• 2h</div>
+          <div class="txt"><p>For anyone finding this later: an FDIC-insured HYSA at 4% is 4% you will actually get. 11.5% you might get is worth a lot less than 11.5%.</p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>96<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+        </div>
+      </div>
+
+      <div class="rd-c">
+        <span class="av def" data-ts-ring="xX_crypto_kingXx"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6z"/></svg></span>
+        <div>
+          <div class="meta"><span class="u">xX_crypto_kingXx</span><span data-ts="xX_crypto_kingXx"></span>• 1h</div>
+          <div class="txt"><p>Forget savings, 11% is nothing. I do 40% monthly, DM me.</p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>−88<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+          <div class="kids">
+            <div class="rd-c">
+              <span class="av" style="background:linear-gradient(135deg,#1d4ed8,#60a5fa)" data-ts-ring="dan_the_accountant">D</span>
+              <div>
+                <div class="meta"><span class="u">dan_the_accountant</span><span data-ts="dan_the_accountant"></span>• 1h</div>
+                <div class="txt"><p>Reported.</p></div>
+                <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>74<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rd-c">
+        <span class="av" style="background:linear-gradient(135deg,#0ea5e9,#67e8f9)" data-ts-ring="maple_and_math">M</span>
+        <div>
+          <div class="meta"><span class="u">maple_and_math</span><span data-ts="maple_and_math"></span>• 48m</div>
+          <div class="txt"><p>Fun fact: at 11.5% compounded your money doubles every ~6.4 years. At 4.1% it takes ~17. That gap is exactly how much risk they are asking you to swallow.</p></div>
+          <div class="row"><span class="rd-vote"><button class="up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 4l8 9h-5v7H9v-7H4z"/></svg></button>41<button class="down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20l-8-9h5V4h6v7h5z"/></svg></button></span><span class="rd-act">Reply</span><span class="rd-act">Award</span><span class="rd-act">Share</span><span class="rd-act">•••</span></div>
+        </div>
+      </div>
+
+      <div class="rd-load">Load 371 more comments</div>
+    </main>
+
+    <aside class="rd-right">
+      <!-- injected by the add-on -->
+      <div class="ts-widget" id="ex-widget">
+        <div class="ts-brand"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.5v6c0 5 3.3 8.6 7.5 10 4.2-1.4 7.5-5 7.5-10v-6z"/><path d="m9 12 2 2 4-4"/></svg> Trust Score</b><span>this thread</span></div>
+        <h3>16 commenters scored</h3>
+        <div class="ts-stack"><i class="ts-green" style="width:50%"></i><i class="ts-amber" style="width:12.5%"></i><i class="ts-red" style="width:37.5%"></i></div>
+        <ul>
+          <li><span><span class="ts-dot ts-green"></span>Likely genuine</span><b>8</b></li>
+          <li><span><span class="ts-dot ts-amber"></span>Uncertain</span><b>2</b></li>
+          <li><span><span class="ts-dot ts-red"></span>Bot-like</span><b>6</b></li>
+          <li><span><span class="ts-dot ts-grey"></span>Not scored (declared bot)</span><b>1</b></li>
+        </ul>
+        <div class="ts-alert">
+          <b>Coordinated cluster detected.</b> All 6 bot-like accounts belong to dense block #2 (41 accounts registered on 3 Jun 2026). They commented within 11 minutes of each other and only reply to one another.
+          <div class="ts-list"><span>SunnyDaysAhead_77</span><span>Marcus_T_Invests</span><span>FinFreedom2026</span><span>quietbloom_04</span><span>ravi_k_saves</span><span>Bright_Penny_</span></div>
+        </div>
+      </div>
+
+      <div class="rd-card">
+        <h3><span class="rd-ci" style="background:#0f9d58;width:28px;height:28px;font-size:12px">pf</span>r/personalfinance</h3>
+        <div style="color:var(--rd-muted)">Learn about budgeting, saving, getting out of debt, credit, investing, and retirement planning. Join our community, read the PF Wiki, and get on top of your finances!</div>
+        <div class="stats"><div><b>21M</b><span>Members</span></div><div><b>2.4K</b><span>Online</span></div><div><b>Top 1%</b><span>Rank by size</span></div></div>
+        <h6>Rules</h6>
+        <ol><li>Be respectful</li><li>Do not solicit or promote</li><li>No referral or affiliate links</li><li>No political or religious discussion</li><li>Questions about scams: read the wiki first</li></ol>
+        <h6>Moderators</h6>
+        <div class="mods"><a>u/pf_mod_alice</a><a>u/dequinox</a><a>u/PFModTeam</a><a>Message the mods</a></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="overlay.js"></script>
+<script>
+const BURST = ['Created in a burst: 41 accounts on 3 Jun 2026', 'ts-red'];
+const BLOCK = ['Dense block #2 · 41 accounts · 96% bot-like', 'ts-red'];
+const clusterMember = (h, score, pbot, facts, why, neighbours, note) => ({
+  handle: 'u/' + h, sub: 'r/personalfinance · ' + facts[0][1] + ' old', score, pbot, facts, why, neighbours,
+  flags: [BURST, BLOCK], note
+});
+
+TrustOverlay.init({
+  platformLabel: 'Reddit', computedOn: '10 Sep 2026', dark: false,
+  how: `
+    <h2>How the trust score works</h2>
+    <p>The add-on never reads what an account writes. It scores <b>who the account is</b> (profile and activity pattern) and <b>where it sits in the network</b> (who replies to it, who it comments alongside, which communities it shares), then lets trust and distrust flow along those links.</p>
+    <h3>1. Own evidence (prior)</h3>
+    <p>A random-forest model on profile and activity features (account age, karma, posting rhythm, number of communities, replies received, default avatar…) gives a first probability of being a bot. Long-standing accounts with a varied history start trusted; brand-new accounts that post in bursts start distrusted.</p>
+    <h3>2. Network channels</h3>
+    <p>Each relation is a channel: <code>reply</code> (who answers whom), <code>co-comment</code> (accounts that keep showing up in the same threads), <code>co-subreddit</code> (shared communities). Each channel gets a weight learned from labelled seed accounts: a channel only counts if bots really cluster along it.</p>
+    <h3>3. Propagation</h3>
+    <div class="ts-formula">r = (1 − α)·q + α·P·r &nbsp;&nbsp;&nbsp; trust = ½ − r</div>
+    <p><code>q</code> is the own evidence, <code>P</code> the weighted network, <code>α</code> how much the neighbourhood counts. The fixed point is unique, so every score splits exactly into a prior term plus one term per channel plus one term per neighbour. That split is what the popover shows.</p>
+    <h3>4. Clusters</h3>
+    <p>Independently, dense blocks of accounts that behave in lockstep (same creation day, same threads, replying only to each other) are detected and shown as flags. Cluster membership is evidence, not a verdict.</p>
+    <h3>5. Seeds</h3>
+    <p>Trusted seeds: moderators and old, high-karma accounts. Distrusted seeds: published bot lists. Declared bots (Reddit's APP label) are not scored.</p>
+    <p style="color:var(--ts-muted);font-size:12px">Scores are recomputed daily from public data. The score is a probability, not a judgement: an "uncertain" 52 means exactly that.</p>`,
+  accounts: {
+    throwaway_saver22: {
+      handle: 'u/throwaway_saver22', sub: 'Original poster · 2 years old', score: 0.71, pbot: 0.12,
+      facts: [['Account age', '2 y 1 m'], ['Karma', '1.2k'], ['Active in', '9 subreddits'], ['Replies received', '61 accounts'], ['Posts / day', '0.3'], ['Avatar', 'custom']],
+      why: [
+        ['Own profile & activity', 0.09, '2-year account, moderate karma, normal posting rhythm'],
+        ['Reply network', 0.07, 'answered by 6 accounts scored ≥ 80 in this thread alone'],
+        ['Co-comment network', 0.04, 'comments alongside long-standing r/personalfinance regulars'],
+        ['Co-subreddit network', 0.01, 'weak channel on Reddit, small effect'],
+        ['Coordination cluster', 0, 'not in any dense block'],
+      ],
+      neighbours: [['u/kira_ledger', 'replied to this account', 0.94, 0.031], ['u/dan_the_accountant', 'replied to this account', 0.83, 0.018], ['u/SunnyDaysAhead_77', 'replied to this account', 0.08, -0.006]],
+      flags: [],
+    },
+    kira_ledger: {
+      handle: 'u/kira_ledger', sub: '8 years old · top 1% commenter in r/personalfinance', score: 0.94, pbot: 0.02,
+      facts: [['Account age', '8 y 3 m'], ['Karma', '48.2k'], ['Active in', '23 subreddits'], ['Replies received', '1,900+ accounts'], ['Posts / day', '1.1'], ['Avatar', 'custom']],
+      why: [
+        ['Own profile & activity', 0.18, 'old account, high karma spread over many communities'],
+        ['Reply network', 0.15, 'replied to by 312 accounts scored ≥ 80, incl. 4 moderators'],
+        ['Co-comment network', 0.08, 'shares threads with the same trusted regulars for years'],
+        ['Co-subreddit network', 0.03, 'weak channel, small effect'],
+        ['Coordination cluster', 0, 'not in any dense block'],
+      ],
+      neighbours: [['u/pf_mod_alice', 'mutual replies (seed: moderator)', 0.97, 0.062], ['u/dan_the_accountant', 'mutual replies', 0.83, 0.041], ['u/old_school_saver', 'co-comment (214 threads)', 0.89, 0.027]],
+      flags: [['Consistent history since 2018', 'ts-green']],
+    },
+    dan_the_accountant: {
+      handle: 'u/dan_the_accountant', sub: '5 years old', score: 0.83, pbot: 0.06,
+      facts: [['Account age', '5 y 7 m'], ['Karma', '19.8k'], ['Active in', '14 subreddits'], ['Replies received', '640 accounts'], ['Posts / day', '0.8'], ['Avatar', 'custom']],
+      why: [
+        ['Own profile & activity', 0.14, '5-year account, varied history'],
+        ['Reply network', 0.11, 'answered mostly by accounts scored ≥ 80'],
+        ['Co-comment network', 0.06, 'regular in the same threads as trusted accounts'],
+        ['Co-subreddit network', 0.02, ''],
+        ['Coordination cluster', 0, 'not in any dense block'],
+      ],
+      neighbours: [['u/kira_ledger', 'mutual replies', 0.94, 0.048], ['u/pf_mod_alice', 'replied to this account', 0.97, 0.022], ['u/xX_crypto_kingXx', 'this account replied to it', 0.27, -0.004]],
+      flags: [],
+    },
+    pf_mod_alice: {
+      handle: 'u/pf_mod_alice', sub: 'Moderator of r/personalfinance since 2019 · trusted seed', score: 0.97, pbot: 0.01,
+      facts: [['Account age', '9 y'], ['Karma', '112k'], ['Active in', '31 subreddits'], ['Replies received', '4,100+ accounts'], ['Posts / day', '2.4'], ['Avatar', 'custom']],
+      why: [
+        ['Own profile & activity', 0.30, 'trusted seed: moderator (fixed prior, not learned)'],
+        ['Reply network', 0.10, 'replied to by hundreds of trusted accounts'],
+        ['Co-comment network', 0.05, ''],
+        ['Co-subreddit network', 0.02, ''],
+        ['Coordination cluster', 0, 'not in any dense block'],
+      ],
+      neighbours: [['u/kira_ledger', 'mutual replies', 0.94, 0.030], ['u/dequinox', 'mutual replies (seed: moderator)', 0.98, 0.028], ['u/old_school_saver', 'replied to this account', 0.89, 0.012]],
+      flags: [['Seed: subreddit moderator', 'ts-green']],
+    },
+    old_school_saver: {
+      handle: 'u/old_school_saver', sub: '11 years old', score: 0.89, pbot: 0.03,
+      facts: [['Account age', '11 y 2 m'], ['Karma', '73k'], ['Active in', '40 subreddits'], ['Replies received', '2,300 accounts'], ['Posts / day', '0.6'], ['Avatar', 'custom']],
+      why: [['Own profile & activity', 0.17, 'one of the oldest accounts in the thread'], ['Reply network', 0.13, ''], ['Co-comment network', 0.07, ''], ['Co-subreddit network', 0.02, ''], ['Coordination cluster', 0, '']],
+      neighbours: [['u/kira_ledger', 'co-comment (214 threads)', 0.94, 0.035], ['u/pf_mod_alice', 'replied to this account', 0.97, 0.020], ['u/SunnyDaysAhead_77', 'this account replied to it', 0.08, -0.003]],
+      flags: [],
+    },
+    tessa_writes_code: {
+      handle: 'u/tessa_writes_code', sub: '3 years old', score: 0.78, pbot: 0.09,
+      facts: [['Account age', '3 y 4 m'], ['Karma', '6.4k'], ['Active in', '17 subreddits'], ['Replies received', '210 accounts'], ['Posts / day', '0.5'], ['Avatar', 'custom']],
+      why: [['Own profile & activity', 0.12, ''], ['Reply network', 0.10, 'mostly answered by trusted r/programming and r/personalfinance regulars'], ['Co-comment network', 0.05, ''], ['Co-subreddit network', 0.01, ''], ['Coordination cluster', 0, '']],
+      neighbours: [['u/maple_and_math', 'mutual replies', 0.86, 0.024], ['u/kira_ledger', 'co-comment (37 threads)', 0.94, 0.019], ['u/ravi_k_saves', 'this account replied to it', 0.18, -0.005]],
+      flags: [],
+    },
+    maple_and_math: {
+      handle: 'u/maple_and_math', sub: '4 years old', score: 0.86, pbot: 0.05,
+      facts: [['Account age', '4 y'], ['Karma', '12k'], ['Active in', '19 subreddits'], ['Replies received', '380 accounts'], ['Posts / day', '0.4'], ['Avatar', 'custom']],
+      why: [['Own profile & activity', 0.15, ''], ['Reply network', 0.12, ''], ['Co-comment network', 0.07, ''], ['Co-subreddit network', 0.02, ''], ['Coordination cluster', 0, '']],
+      neighbours: [['u/tessa_writes_code', 'mutual replies', 0.78, 0.026], ['u/dan_the_accountant', 'replied to this account', 0.83, 0.017]],
+      flags: [],
+    },
+    JustHere4Memes: {
+      handle: 'u/JustHere4Memes', sub: '7 months old · little network data', score: 0.52, pbot: 0.44,
+      facts: [['Account age', '7 m'], ['Karma', '340'], ['Active in', '3 subreddits'], ['Replies received', '3 accounts'], ['Posts / day', '0.2'], ['Avatar', 'custom']],
+      why: [
+        ['Own profile & activity', 0.03, 'young but normal-looking profile, meme subreddits only'],
+        ['Reply network', -0.01, 'only 3 replies ever received: almost no evidence'],
+        ['Co-comment network', 0, 'no signal'],
+        ['Co-subreddit network', 0, 'no signal'],
+        ['Coordination cluster', 0, 'not in any dense block'],
+      ],
+      neighbours: [['u/memelord_42', 'replied to this account', 0.61, 0.004]],
+      flags: [['Little network data (3 interactions)', 'ts-amber']],
+      note: 'The score stays near 50 on purpose: the model has seen almost nothing about this account, so it refuses to commit either way.',
+    },
+    xX_crypto_kingXx: {
+      handle: 'u/xX_crypto_kingXx', sub: '5 weeks old', score: 0.27, pbot: 0.71,
+      facts: [['Account age', '5 w'], ['Karma', '−212'], ['Active in', '1 subreddit'], ['Replies received', '4 accounts'], ['Posts / day', '58'], ['Avatar', 'default']],
+      why: [
+        ['Own profile & activity', -0.15, '58 posts a day, single subreddit, default avatar, negative karma'],
+        ['Reply network', -0.04, 'the few replies it gets are hostile one-offs from trusted accounts'],
+        ['Co-comment network', -0.03, 'appears in threads together with 12 other spam accounts'],
+        ['Co-subreddit network', -0.01, ''],
+        ['Coordination cluster', 0, 'not in a dense block (acts alone)'],
+      ],
+      neighbours: [['u/dan_the_accountant', 'replied to this account', 0.83, 0.006], ['u/moon_signal_bot', 'co-comment (28 threads)', 0.09, -0.012], ['u/pump_alerts_daily', 'co-comment (19 threads)', 0.12, -0.009]],
+      flags: [['High posting velocity (58 / day)', 'ts-red'], ['Default avatar, no description', 'ts-amber']],
+      note: 'Bot-like on its own behaviour, but not part of the NovaYield cluster: a different kind of spam account.',
+    },
+    NovaYield_Official: {
+      handle: 'u/NovaYield_Official', sub: 'Brand account · 1 year old', score: 0.44, pbot: 0.53,
+      facts: [['Account age', '1 y 1 m'], ['Karma', '2.1k'], ['Active in', '6 subreddits'], ['Replies received', '412 accounts'], ['Posts / day', '1.9'], ['Avatar', 'custom']],
+      why: [
+        ['Own profile & activity', 0.05, 'the account itself looks like a normal brand account'],
+        ['Reply network', -0.09, '78% of the accounts that reply to it are in dense block #2 (bot-like)'],
+        ['Co-comment network', -0.02, 'shows up in the same threads as the cluster'],
+        ['Co-subreddit network', 0, ''],
+        ['Coordination cluster', 0, 'not itself in the block'],
+      ],
+      neighbours: [['u/SunnyDaysAhead_77', 'replied to this account (14×)', 0.08, -0.021], ['u/FinFreedom2026', 'replied to this account (11×)', 0.07, -0.018], ['u/kira_ledger', 'replied to this account', 0.94, 0.009]],
+      flags: [['Amplified by a coordinated cluster', 'ts-red']],
+      note: 'The account looks normal, its audience does not. That is exactly the signal a content-based detector would miss.',
+    },
+    AutoModerator: {
+      handle: 'u/AutoModerator', sub: 'Reddit platform bot', exempt: 'Declared bot (Reddit APP label). Declared automation is not scored: the score is about accounts pretending to be people.', exemptShort: 'bot',
+    },
+    SunnyDaysAhead_77: clusterMember('SunnyDaysAhead_77', 0.08, 0.93,
+      [['Account age', '3 m 9 d'], ['Karma', '−140'], ['Active in', '2 subreddits'], ['Replies received', '9 accounts'], ['Posts / day', '14 (first week)'], ['Avatar', 'default']],
+      [['Own profile & activity', -0.19, 'created 3 Jun 2026, 14 posts/day in week 1, 2 subreddits, default avatar'],
+       ['Reply network', -0.05, 'only ever answered by the other accounts created the same day'],
+       ['Co-comment network', -0.11, 'appears in the same 6 threads as 37 accounts created the same day'],
+       ['Co-subreddit network', -0.02, ''],
+       ['Coordination cluster', -0.05, 'dense block #2: 41 accounts, 96% bot-like']],
+      [['u/Marcus_T_Invests', 'co-comment (6 threads) · same creation day', 0.05, -0.041], ['u/quietbloom_04', 'replied to this account', 0.11, -0.033], ['u/FinFreedom2026', 'co-comment (6 threads)', 0.07, -0.029]],
+      'Score 8: the account is behaviourally indistinguishable from the 40 others registered with it.'),
+    Marcus_T_Invests: clusterMember('Marcus_T_Invests', 0.05, 0.96,
+      [['Account age', '3 m 9 d'], ['Karma', '−96'], ['Active in', '2 subreddits'], ['Replies received', '7 accounts'], ['Posts / day', '12 (first week)'], ['Avatar', 'default']],
+      [['Own profile & activity', -0.21, 'created 3 Jun 2026, burst posting, default avatar'], ['Reply network', -0.06, 'only answered by same-day accounts'], ['Co-comment network', -0.12, 'same 6 threads as the cluster'], ['Co-subreddit network', -0.02, ''], ['Coordination cluster', -0.04, 'dense block #2']],
+      [['u/SunnyDaysAhead_77', 'co-comment (6 threads)', 0.08, -0.044], ['u/Bright_Penny_', 'replied to this account', 0.09, -0.031], ['u/old_school_saver', 'this account replied to it', 0.89, 0.004]],
+      'Replying to a genuine account (u/old_school_saver) adds a tiny +0.004: one interaction cannot undo 40 lockstep siblings.'),
+    FinFreedom2026: clusterMember('FinFreedom2026', 0.07, 0.94,
+      [['Account age', '3 m 9 d'], ['Karma', '−203'], ['Active in', '2 subreddits'], ['Replies received', '8 accounts'], ['Posts / day', '15 (first week)'], ['Avatar', 'default']],
+      [['Own profile & activity', -0.20, ''], ['Reply network', -0.06, ''], ['Co-comment network', -0.11, ''], ['Co-subreddit network', -0.02, ''], ['Coordination cluster', -0.04, 'dense block #2']],
+      [['u/quietbloom_04', 'replied to this account', 0.11, -0.038], ['u/ravi_k_saves', 'replied to this account', 0.18, -0.030], ['u/SunnyDaysAhead_77', 'co-comment (6 threads)', 0.08, -0.029]]),
+    quietbloom_04: clusterMember('quietbloom_04', 0.11, 0.90,
+      [['Account age', '3 m 9 d'], ['Karma', '−58'], ['Active in', '3 subreddits'], ['Replies received', '6 accounts'], ['Posts / day', '9 (first week)'], ['Avatar', 'default']],
+      [['Own profile & activity', -0.17, ''], ['Reply network', -0.05, ''], ['Co-comment network', -0.11, ''], ['Co-subreddit network', -0.02, ''], ['Coordination cluster', -0.04, 'dense block #2']],
+      [['u/FinFreedom2026', 'this account replied to it', 0.07, -0.036], ['u/SunnyDaysAhead_77', 'co-comment (6 threads)', 0.08, -0.030]]),
+    ravi_k_saves: clusterMember('ravi_k_saves', 0.18, 0.84,
+      [['Account age', '3 m 9 d'], ['Karma', '−71'], ['Active in', '4 subreddits'], ['Replies received', '11 accounts'], ['Posts / day', '8 (first week)'], ['Avatar', 'default']],
+      [['Own profile & activity', -0.15, 'slightly more varied than its siblings'], ['Reply network', -0.02, 'two genuine accounts replied to it (small positive pull)'], ['Co-comment network', -0.10, ''], ['Co-subreddit network', -0.01, ''], ['Coordination cluster', -0.04, 'dense block #2']],
+      [['u/tessa_writes_code', 'replied to this account', 0.78, 0.012], ['u/FinFreedom2026', 'this account replied to it', 0.07, -0.035], ['u/SunnyDaysAhead_77', 'co-comment (6 threads)', 0.08, -0.028]],
+      'Highest score of the cluster (18) because two genuine accounts engaged with it, but still far below 40.'),
+    Bright_Penny_: clusterMember('Bright_Penny_', 0.09, 0.92,
+      [['Account age', '3 m 9 d'], ['Karma', '−33'], ['Active in', '2 subreddits'], ['Replies received', '4 accounts'], ['Posts / day', '11 (first week)'], ['Avatar', 'default']],
+      [['Own profile & activity', -0.19, ''], ['Reply network', -0.05, ''], ['Co-comment network', -0.12, ''], ['Co-subreddit network', -0.01, ''], ['Coordination cluster', -0.04, 'dense block #2']],
+      [['u/Marcus_T_Invests', 'this account replied to it', 0.05, -0.040], ['u/SunnyDaysAhead_77', 'co-comment (6 threads)', 0.08, -0.031]]),
+  }
+});
+</script>
+</body>
+</html>
