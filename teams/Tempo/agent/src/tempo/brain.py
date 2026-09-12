@@ -6,7 +6,7 @@ import os
 from google import genai
 from google.genai import types
 
-from .actions import DECLARATIONS
+from .actions import DECLARATIONS, PIXELS_DECLARATIONS
 from .perception import Snapshot
 
 DEFAULT_MODEL = "gemini-3.6-flash"
@@ -37,7 +37,7 @@ class Brain:
         if self.geometry:
             parts.append(types.Part.from_text(text="Scene:\n" + snap.scene_text()))
         else:
-            parts.append(types.Part.from_text(text="Scene: (no geometry available; judge distances and surfaces from the image)"))
+            parts.append(types.Part.from_text(text="No geometry is available. Estimate distances and surfaces from the image and place things by metre offsets."))
         if audio:
             parts.append(types.Part.from_bytes(data=audio, mime_type="audio/wav"))
             parts.append(types.Part.from_text(text="The wearer said the audio above."))
@@ -48,7 +48,7 @@ class Brain:
             contents=[types.Content(role="user", parts=parts)],
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM,
-                tools=[types.Tool(function_declarations=DECLARATIONS)],
+                tools=[types.Tool(function_declarations=DECLARATIONS if self.geometry else PIXELS_DECLARATIONS)],
                 temperature=0.2,
             ),
         )

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import time
 from dataclasses import dataclass
 from typing import Any, Iterator
 
@@ -90,13 +91,16 @@ class Shell:
     def layout_load(self, name: str) -> str:
         return self.send(f"layout load {name}").body
 
-    def launch_app(self, target: str) -> int:
+    def launch_app(self, target: str, wait_s: float = 2.0) -> int:
         before = {w["handle"] for w in self.windows()}
         self.send(f"launch-app {target}")
-        new = [w["handle"] for w in self.windows() if w["handle"] not in before]
-        if not new:
-            raise ShellError(f"launch-app {target!r} produced no window")
-        return new[0]
+        deadline = time.time() + wait_s
+        while time.time() < deadline:
+            new = [w["handle"] for w in self.windows() if w["handle"] not in before]
+            if new:
+                return new[0]
+            time.sleep(0.1)
+        raise ShellError(f"launch-app {target!r} produced no window")
 
     def move(self, handle: int, pos: tuple[float, float, float]) -> None:
         x, y, z = pos

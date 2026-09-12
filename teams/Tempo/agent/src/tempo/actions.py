@@ -80,6 +80,41 @@ DECLARATIONS = [
     ),
 ]
 
+def _offset_props() -> dict[str, types.Schema]:
+    return {
+        "forward_m": types.Schema(type=types.Type.NUMBER, description="Metres ahead of the wearer's head, along their gaze. Estimate from the image."),
+        "right_m": types.Schema(type=types.Type.NUMBER, description="Metres to the wearer's right (negative = left)."),
+        "up_m": types.Schema(type=types.Type.NUMBER, description="Metres above eye level (negative = below)."),
+    }
+
+
+PIXELS_DECLARATIONS = [
+    types.FunctionDeclaration(
+        name="place_note_at",
+        description="Create a note card at a position you estimate from the image alone, relative to the wearer's head.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "title": types.Schema(type=types.Type.STRING),
+                "body": types.Schema(type=types.Type.STRING),
+                **_offset_props(),
+            },
+            required=["title", "body", "forward_m", "right_m", "up_m"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="open_app_at",
+        description="Open a Mac app panel at a position you estimate from the image alone, relative to the wearer's head.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={"app": types.Schema(type=types.Type.STRING), **_offset_props()},
+            required=["app", "forward_m", "right_m", "up_m"],
+        ),
+    ),
+    DECLARATIONS[-1],
+]
+
+
 APP_ALIASES = {
     "safari": "com.apple.Safari",
     "notes": "com.apple.Notes",
@@ -178,6 +213,19 @@ class Executor:
     def _do_gather_panels(self, out: Outcome) -> str:
         self.shell.gather()
         return "gathered"
+
+    def _offset(self, forward_m: float, right_m: float, up_m: float) -> spatial.Vec3:
+        return spatial.in_front(self.snap.head, float(forward_m), right=float(right_m), up=float(up_m))
+
+    def _do_place_note_at(self, out: Outcome, title: str, body: str, forward_m: float, right_m: float, up_m: float) -> str:
+        handle = self.shell.note(title, body, accent=True)
+        self.shell.move(handle, self._offset(forward_m, right_m, up_m))
+        return f"note #{handle} {title!r} @ f={forward_m} r={right_m} u={up_m}"
+
+    def _do_open_app_at(self, out: Outcome, app: str, forward_m: float, right_m: float, up_m: float) -> str:
+        handle = self.shell.launch_app(APP_ALIASES.get(app.lower().strip(), app))
+        self.shell.move(handle, self._offset(forward_m, right_m, up_m))
+        return f"app {app} #{handle} @ f={forward_m} r={right_m} u={up_m}"
 
     def _do_say(self, out: Outcome, text: str) -> str:
         out.spoken = text

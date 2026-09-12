@@ -28,13 +28,19 @@ class Trial:
     actions: list[str]
 
 
+SURFACE_SLACK_M = 0.25
+
+
 def _nearest_surface(pos: spatial.Vec3, planes: list[dict], head: dict) -> tuple[str | None, float | None]:
+    """Kind and off-surface distance of the plane the point sits over (projection inside its extent)."""
     best: tuple[str, float] | None = None
     for p in planes:
         n = p["normal"]
         c = p["center"]
-        d = abs(spatial.dot(n, (pos[0] - c[0], pos[1] - c[1], pos[2] - c[2])))
-        if spatial.dist(pos, c) > max(p["extent"]) / 2 + 0.6:
+        rel = spatial.sub(pos, c)
+        d = abs(spatial.dot(n, rel))
+        in_plane = spatial.sub(rel, spatial.scale(n, spatial.dot(n, rel)))
+        if spatial.dist(in_plane, (0, 0, 0)) > max(p["extent"]) / 2 + SURFACE_SLACK_M:
             continue
         if best is None or d < best[1]:
             best = (spatial.plane_kind(p, head), d)
