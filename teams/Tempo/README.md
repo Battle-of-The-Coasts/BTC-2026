@@ -6,6 +6,14 @@ East v. West 72 Hour Hackathon, Sep 12 to 14 2026. Team Tempo: Tarun Yadgirkar (
 
 Spatial computers today are a phone-style app grid floating in front of your face. The room is scenery. Tempo asks what changes when the room itself is the interface: when an agent sees what you see, knows where the table, the walls, and your open windows are, and can put information *into the room* instead of talking at you.
 
+The precise version: **how much does explicit room geometry buy an embodied agent over pixels alone, for the physical operation of placing information at a location?**
+
+- **Operation.** Given a spoken request and the wearer's view, put a panel at the right physical spot (the desk, the wall behind the monitor, next to the thing being pointed at).
+- **Baseline.** The same model, same prompt, same tools, but with the image only. It has to guess distances and surfaces from pixels.
+- **Treatment.** Image plus the scene graph the compositor already has: head pose, LiDAR planes classified as table / wall / floor with distances, existing panels, and (from checkpoint 2) the hand pointing ray.
+- **Measured.** On a fixed set of 20 requests in one room: placement error in metres from the intended surface (ground truth from the detected planes), surface-class accuracy (landed on a table when asked for the table), end-to-end latency from request to panel visible, and cost per request. Reported per checkpoint as the set grows.
+- **Failure case we expect.** Requests that reference an object the planes don't describe ("next to the lamp"). Geometry gives no surface; the agent has to fall back to the image. We will report how often that fallback lands.
+
 ## What it is
 
 An AR shell for glasses, running today on an iPhone strapped in front of a Mac.
