@@ -78,3 +78,42 @@ def describe_planes(planes: list[dict], head: dict) -> list[dict]:
             }
         )
     return sorted(out, key=lambda d: d["distance_m"])
+
+
+def dot(a: Sequence[float], b: Sequence[float]) -> float:
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+
+def ray_plane_hit(origin: Sequence[float], direction: Sequence[float], plane: dict, slack_m: float = 0.3) -> tuple[float, Vec3] | None:
+    """Distance along the ray and the hit point, if the ray meets this plane within its extent (plus slack)."""
+    n = plane["normal"]
+    denom = dot(n, direction)
+    if abs(denom) < 1e-4:
+        return None
+    c = plane["center"]
+    t = dot(n, (c[0] - origin[0], c[1] - origin[1], c[2] - origin[2])) / denom
+    if t <= 0.05:
+        return None
+    hit = add(origin, scale(direction, t))
+    reach = max(plane["extent"]) / 2 + slack_m
+    if dist(hit, c) > reach:
+        return None
+    return t, hit
+
+
+def gaze_hit(head: dict, planes: list[dict], kinds: set[str]) -> Vec3 | None:
+    """Where the wearer's forward ray meets the nearest plane of the given kinds, pulled 5 cm off the surface."""
+    origin = head["scene_pos"]
+    direction = normalize(rotate(head["scene_rot"], (0.0, 0.0, -1.0)))
+    best: tuple[float, Vec3, dict] | None = None
+    for p in planes:
+        if plane_kind(p, head) not in kinds:
+            continue
+        hit = ray_plane_hit(origin, direction, p)
+        if hit and (best is None or hit[0] < best[0]):
+            best = (hit[0], hit[1], p)
+    if best is None:
+        return None
+    n = best[2]["normal"]
+    toward_viewer = 1.0 if dot(n, (origin[0] - best[1][0], origin[1] - best[1][1], origin[2] - best[1][2])) > 0 else -1.0
+    return add(best[1], scale(n, 0.05 * toward_viewer))

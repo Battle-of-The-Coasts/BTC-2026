@@ -132,9 +132,14 @@ class Executor:
             case "right":
                 return spatial.in_front(head, 0.8, right=0.5 + side)
             case "on_table":
-                return spatial.in_front(head, 0.7, up=-0.25, right=side)
-            case "on_wall" | "where_looking":
-                return spatial.in_front(head, 1.6, right=side)
+                hit = spatial.gaze_hit(head, self.snap.planes, {"table"})
+                return spatial.add(hit, (0, 0.12, 0)) if hit else spatial.in_front(head, 0.7, up=-0.25, right=side)
+            case "on_wall":
+                hit = spatial.gaze_hit(head, self.snap.planes, {"wall"})
+                return hit or spatial.in_front(head, 1.6, right=side)
+            case "where_looking":
+                hit = spatial.gaze_hit(head, self.snap.planes, {"wall", "table", "floor"})
+                return hit or spatial.in_front(head, 1.2, right=side)
             case _:
                 return spatial.in_front(head, 0.9, right=side)
 
