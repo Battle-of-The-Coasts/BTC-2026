@@ -22,6 +22,7 @@
 
 #include "core/anchor_math.h"
 #include "core/hud_state.h"
+#include "core/layout_store.h"
 #include "ui/keyboard_overlay.h"
 #include "ui/launcher_menu.h"
 #include "ui/panel_surface.h"
@@ -41,6 +42,7 @@ constexpr size_t HEAD_POSE_RING = 30;
 enum class panel_kind {
     internal_test_card,
     captured_window,  // Stage 2: ScreenCaptureKit
+    note,             // CPU-drawn note card (control verb `note`)
 };
 
 // Input events forwarded to captured windows (Stage 2 CGEvent injection).
@@ -57,6 +59,8 @@ struct panel {
     int32_t owner_pid = 0;  // captured panels: pid of the source app
     std::string app_id;
     std::string title;
+    std::string note_body;      // note panels: the wrapped body text
+    bool note_accent = false;   // note panels: draw the accent rule
 
     // Scene-frame position. Unanchored panels carry a yaw (rotation about
     // +Y, facing the head at spawn/gather time); when anchored, m holds the
@@ -118,6 +122,22 @@ class scene {
     // ---- control-plane operations ----
     // Returns the new handle, or 0 when MAX_PANELS is reached.
     uint64_t spawn_panel(const std::string &app_id, const std::string &title);
+    // Note card: title over word-wrapped body, drawn CPU-side. app_id is
+    // "note" so `list-windows` distinguishes it from a test card.
+    uint64_t spawn_note_panel(const std::string &title,
+                              const std::string &body, bool accent);
+    // Fields left unset keep their current value (`note-update` may carry
+    // only the half that changed).
+    struct note_patch {
+        bool set_title = false;
+        std::string title;
+        bool set_body = false;
+        std::string body;
+        bool set_accent = false;
+        bool accent = false;
+    };
+    bool update_note(uint64_t handle, const note_patch &patch);
+
     // Stage 2: panel backed by a ScreenCaptureKit stream (renderer pulls the
     // texture from the capture manager by handle).
     uint64_t spawn_captured_panel(const std::string &app_id,
@@ -183,11 +203,23 @@ class scene {
     using app_launch_fn = std::function<void(const std::string &target)>;
     void set_app_launcher(app_launch_fn fn);
 
+    // ---- layouts (control verb `layout`) ----
+    std::vector<layout_panel> capture_layout() const;
+    // Re-poses a freshly spawned panel onto its saved placement (position,
+    // yaw, pixel size, quad width, anchor). False for an unknown handle.
+    bool apply_layout_pose(uint64_t handle, const layout_panel &saved);
+    std::vector<uint64_t> panel_handles() const;
+
     // ---- state serialisation (reply payloads; shapes mirror control.c) ----
     std::string windows_json(bool include_input_log) const;
     std::string planes_json() const;
     std::string head_pose_json() const;
     std::string dump_state_json() const;
+    // Where the user is pointing right now: hand count, the pinch midpoint,
+    // the head->aim ray, whether a pinch is held, the panel that ray picks,
+    // and where it lands (on that panel's quad, else on the nearest plane).
+    // Every vector is null when no confident hand is visible.
+    std::string aim_json() const;
 
     // Event lines queued for `subscribe` streams ("event ..." payloads).
     std::vector<std::string> drain_events();
@@ -285,7 +317,7 @@ class scene {
     // mutex_ held: panel a pinch at `point` targets — direct touch first,
     // else the nearest panel to the head->point ray in front of the user.
     // `out_direct` reports which of the two won (the hit test differs).
-    panel *pick_aim_panel(const float point[3], bool *out_direct);
+    panel *pick_aim_panel(const float point[3], bool *out_direct) const;
     // mutex_ held: refresh aim_handle_ from the live hand's pinch midpoint.
     void update_aim();
     // mutex_ held: the pinch midpoint of the freshest tracked hand, which is
@@ -384,6 +416,10 @@ class scene {
     uint64_t focused_ = 0;
     uint64_t aimed_ = 0;
     uint64_t grabbed_ = 0;
+    // pinch_select is held: set on the POINTER_CLICK BEGIN, cleared on its
+    // END/CANCEL. The gesture stream is edge-triggered, so `aim` needs this
+    // to answer "is the user pinching right now".
+    bool pinch_held_ = false;
     // Grab deadband: accumulated hand displacement since WINDOW_MOVE BEGIN;
     // the panel target only starts following once it exceeds the deadband,
     // so a held (jittering) grab doesn't micro-shake the panel.

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "spatial_bridge.h"
 
@@ -74,5 +75,9 @@ int anchors_snap_core(const anchor_env &env, const float vp[3],
 
 // Parse a 32-hex-digit UUID (no dashes) — anchors.h wxrd_parse_uuid_hex.
 bool parse_uuid_hex(const char *hex, uint8_t out[16]);
+
+// The inverse: 32 lowercase hex digits, the spelling every reply and layout
+// file uses.
+std::string uuid_to_hex(const uint8_t uuid[16]);
 
 }  // namespace mac_shell

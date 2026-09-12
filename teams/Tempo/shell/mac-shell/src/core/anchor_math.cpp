@@ -229,4 +229,14 @@ bool parse_uuid_hex(const char *hex, uint8_t out[16]) {
     return true;
 }
 
+std::string uuid_to_hex(const uint8_t uuid[16]) {
+    static const char hex[] = "0123456789abcdef";
+    std::string s(32, '0');
+    for (int i = 0; i < 16; i++) {
+        s[i * 2] = hex[(uuid[i] >> 4) & 0xf];
+        s[i * 2 + 1] = hex[uuid[i] & 0xf];
+    }
+    return s;
+}
+
 }  // namespace mac_shell

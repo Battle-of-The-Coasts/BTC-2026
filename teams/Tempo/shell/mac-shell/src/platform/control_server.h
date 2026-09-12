@@ -22,6 +22,8 @@
 #include "control_conn.h"
 #include "control_protocol.h"
 
+#include "core/layout_store.h"
+
 namespace mac_shell {
 
 class scene;
@@ -99,6 +101,11 @@ class control_server {
     // Handles `screenshot`, which the vendored parser only knows in its
     // `screenshot <handle>` form. Returns false when the line is not one.
     bool handle_screenshot(conn &c, const char *line);
+
+    // `layout load` for a saved captured_window panel: re-runs `launch-app`
+    // and returns the handle of the panel that appeared, or 0 when nothing
+    // did (no renderer, no permission, the app is gone).
+    uint64_t relaunch_captured(const layout_panel &saved);
 
     scene &scene_;
     launch_app_fn launch_app_;

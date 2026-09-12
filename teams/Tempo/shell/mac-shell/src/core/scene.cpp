@@ -7,7 +7,9 @@
 #include <cstdio>
 #include <cstring>
 
+#include "core/json_lite.h"
 #include "core/placement_math.h"
+#include "ui/note_card.h"
 #include "ui/theme_tokens.h"
 #include "core/vec_math.h"
 
@@ -42,26 +44,6 @@ constexpr float SPAWN_STEP_X = 0.25f;
 // its ARKit session, so its origin has moved (wxrd main.c uses the same 2 s).
 constexpr double POSE_GAP_RECAPTURE_S = 2.0;
 
-void json_escape(const std::string &in, std::string &out) {
-    for (char c : in) {
-        switch (c) {
-            case '"': out += "\\\""; break;
-            case '\\': out += "\\\\"; break;
-            case '\n': out += "\\n"; break;
-            case '\r': out += "\\r"; break;
-            case '\t': out += "\\t"; break;
-            default:
-                if ((unsigned char)c < 0x20) {
-                    char buf[8];
-                    std::snprintf(buf, sizeof(buf), "\\u%04x", c);
-                    out += buf;
-                } else {
-                    out += c;
-                }
-        }
-    }
-}
-
 std::string fnum(double v) {
     char buf[32];
     std::snprintf(buf, sizeof(buf), "%g", v);
@@ -75,16 +57,6 @@ std::string vec_json(const float *v, int n) {
         s += fnum((double)v[i]);
     }
     s += "]";
-    return s;
-}
-
-std::string uuid_hex(const uint8_t uuid[16]) {
-    static const char hex[] = "0123456789abcdef";
-    std::string s(32, '0');
-    for (int i = 0; i < 16; i++) {
-        s[i * 2] = hex[(uuid[i] >> 4) & 0xf];
-        s[i * 2 + 1] = hex[uuid[i] & 0xf];
-    }
     return s;
 }
 
@@ -106,8 +78,9 @@ float panel_height_m(const panel &p) {
 // is touching the quad); otherwise the head->point ray is intersected with
 // the panel plane. False when the hit falls outside the quad, so the caller
 // can fall back to focus-only.
-bool panel_hit_px(const panel &p, const float head[3], const float point[3],
-                  bool direct, float *out_x, float *out_y, float *out_distance = nullptr) {
+bool panel_hit_point(const panel &p, const float head[3],
+                     const float point[3], bool direct, float out_hit[3],
+                     float *out_x, float *out_y, float *out_distance) {
     const float right[3] = {p.m[0], p.m[1], p.m[2]};
     const float up[3] = {p.m[4], p.m[5], p.m[6]};
     const float normal[3] = {p.m[8], p.m[9], p.m[10]};
@@ -146,10 +119,67 @@ bool panel_hit_px(const panel &p, const float head[3], const float point[3],
         return false;
     if (lx < -hw || lx > hw || ly < -hh || ly > hh)
         return false;
-    float px = (lx / (hw * 2.0f) + 0.5f) * (float)p.width_px;
-    float py = (0.5f - ly / (hh * 2.0f)) * (float)p.height_px;
-    *out_x = std::fmax(0.0f, std::fmin(px, (float)p.width_px - 1.0f));
-    *out_y = std::fmax(0.0f, std::fmin(py, (float)p.height_px - 1.0f));
+    if (out_hit)
+        v3copy(hit, out_hit);
+    if (out_x && out_y) {
+        float px = (lx / (hw * 2.0f) + 0.5f) * (float)p.width_px;
+        float py = (0.5f - ly / (hh * 2.0f)) * (float)p.height_px;
+        *out_x = std::fmax(0.0f, std::fmin(px, (float)p.width_px - 1.0f));
+        *out_y = std::fmax(0.0f, std::fmin(py, (float)p.height_px - 1.0f));
+    }
+    return true;
+}
+
+bool panel_hit_px(const panel &p, const float head[3], const float point[3],
+                  bool direct, float *out_x, float *out_y,
+                  float *out_distance = nullptr) {
+    return panel_hit_point(p, head, point, direct, nullptr, out_x, out_y,
+                           out_distance);
+}
+
+// Where the head->aim ray first meets a detected plane, in the scene frame.
+// A hit inside a plane's extent wins over one that only grazes its infinite
+// plane, so a ray pointed at the desk lands on the desk and not on the wall
+// behind it. False when the ray meets nothing in front of the user.
+bool ray_plane_hit(const anchor_env &env, const sb_plane_t *planes,
+                   int n_planes, const float origin[3], const float dir[3],
+                   float out_hit[3]) {
+    float best_t = 0.0f, best_any_t = 0.0f;
+    bool have = false, have_any = false;
+    for (int i = 0; i < n_planes; i++) {
+        if (planes[i].is_removed)
+            continue;
+        float center[3], normal[3], right[3], fwd[3];
+        plane_to_scene_basis(env, planes[i], center, normal, right, fwd);
+        float denom = v3dot(dir, normal);
+        if (std::fabs(denom) < 1e-5f)
+            continue;
+        float rel[3];
+        v3sub(center, origin, rel);
+        float t = v3dot(rel, normal) / denom;
+        if (!(t > 0.0f) || !std::isfinite(t))
+            continue;
+        if (!have_any || t < best_any_t) {
+            best_any_t = t;
+            have_any = true;
+        }
+        float hit[3] = {origin[0] + t * dir[0], origin[1] + t * dir[1],
+                        origin[2] + t * dir[2]};
+        float local[3];
+        v3sub(hit, center, local);
+        if (std::fabs(v3dot(local, right)) > planes[i].extent[0] * 0.5f ||
+            std::fabs(v3dot(local, fwd)) > planes[i].extent[1] * 0.5f)
+            continue;
+        if (!have || t < best_t) {
+            best_t = t;
+            have = true;
+        }
+    }
+    if (!have && !have_any)
+        return false;
+    float t = have ? best_t : best_any_t;
+    for (int i = 0; i < 3; i++)
+        out_hit[i] = origin[i] + t * dir[i];
     return true;
 }
 
@@ -401,7 +431,16 @@ void scene::tick_locked(float dt) {
     refresh_anchor_transforms();
 
     for (auto &p : panels_) {
-        if (!p->surface_dirty || p->kind != panel_kind::internal_test_card)
+        if (!p->surface_dirty)
+            continue;
+        if (p->kind == panel_kind::note) {
+            render_note_card(p->surface, p->title, p->note_body,
+                             p->note_accent);
+            p->surface_dirty = false;
+            p->surface_version++;
+            continue;
+        }
+        if (p->kind != panel_kind::internal_test_card)
             continue;
         std::vector<std::string> tail;
         size_t start = p->input_log.size() > PANEL_INPUT_LOG_TAIL
@@ -477,7 +516,8 @@ void scene::refresh_anchor_transforms() {
 // pinch must actually aim at the panel. Direct touch (pinch point near the
 // panel) wins outright; otherwise the panel must sit near the head->pinch ray
 // and IN FRONT of the user — never target a panel behind you.
-panel *scene::pick_aim_panel(const float point[3], bool *out_direct) {
+panel *scene::pick_aim_panel(const float point[3],
+                             bool *out_direct) const {
     float ray[3];
     v3sub(point, env_.head_pos, ray);
     bool have_ray = v3normalize(ray) > 1e-5f;
@@ -581,6 +621,20 @@ void scene::on_gesture(const ge_event_t &ev) {
     // vocabulary — suppress window manipulation so taps/rolls can't move or
     // close panels underneath.
     bool overlay_active = keyboard_.visible() || launcher_.visible();
+
+    // Pinch state is physical: it holds even while an overlay owns the
+    // pointer vocabulary. Broadcast separately from the gesture line because
+    // that one carries the winning VARIANT ("pinch_select.loose"), so a
+    // subscriber matching on the plain name misses most pinches.
+    if (ev.action == GE_ACTION_POINTER_CLICK) {
+        if (ev.type == GE_EVENT_BEGIN) {
+            pinch_held_ = true;
+            push_event("event pinch phase=begin");
+        } else if (ev.type == GE_EVENT_END || ev.type == GE_EVENT_CANCEL) {
+            pinch_held_ = false;
+            push_event("event pinch phase=end");
+        }
+    }
 
     switch (ev.action) {
         case GE_ACTION_TOGGLE_LAUNCHER: {
@@ -935,6 +989,45 @@ uint64_t scene::spawn_captured_panel(const std::string &app_id,
         focused_ = h;
     push_event(handle_event("window-map", h));
     return h;
+}
+
+uint64_t scene::spawn_note_panel(const std::string &title,
+                                 const std::string &body, bool accent) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (panels_.size() >= MAX_PANELS)
+        return 0;
+    auto p = std::make_unique<panel>();
+    p->handle = next_handle_++;
+    p->kind = panel_kind::note;
+    p->app_id = "note";
+    p->title = title;
+    p->note_body = body;
+    p->note_accent = accent;
+    p->width_px = NOTE_DEFAULT_W_PX;
+    p->height_px = NOTE_DEFAULT_H_PX;
+    place_new_panel(*p);
+    p->surface.resize(p->width_px, p->height_px);
+    uint64_t h = p->handle;
+    panels_.push_back(std::move(p));
+    if (focused_ == 0)
+        focused_ = h;
+    push_event(handle_event("window-map", h));
+    return h;
+}
+
+bool scene::update_note(uint64_t handle, const note_patch &patch) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    panel *p = find_panel(handle);
+    if (!p || p->kind != panel_kind::note)
+        return false;
+    if (patch.set_title)
+        p->title = patch.title;
+    if (patch.set_body)
+        p->note_body = patch.body;
+    if (patch.set_accent)
+        p->note_accent = patch.accent;
+    p->surface_dirty = true;
+    return true;
 }
 
 void scene::set_input_injector(injector_fn fn) {
@@ -1440,7 +1533,7 @@ std::string scene::window_json(const panel &p, bool include_input_log) const {
     s += std::string(",\"focused\":") +
          (p.handle == focused_ ? "true" : "false");
     if (p.has_anchor)
-        s += ",\"anchor\":\"" + uuid_hex(p.anchor_uuid) + "\"";
+        s += ",\"anchor\":\"" + uuid_to_hex(p.anchor_uuid) + "\"";
     else
         s += ",\"anchor\":null";
     // Panel geometry is authored in the SCENE frame (origin-subtracted); the
@@ -1496,7 +1589,7 @@ std::string scene::planes_json() const {
             continue;
         if (!first) s += ",";
         first = false;
-        s += "{\"uuid\":\"" + uuid_hex(planes_[i].uuid) + "\"";
+        s += "{\"uuid\":\"" + uuid_to_hex(planes_[i].uuid) + "\"";
         s += ",\"center\":" + vec_json(planes_[i].center, 3);
         s += ",\"normal\":" + vec_json(planes_[i].normal, 3);
         s += ",\"extent\":" + vec_json(planes_[i].extent, 2);
@@ -1529,6 +1622,107 @@ std::string scene::head_pose_json() const {
     }
     s += "}";
     return s;
+}
+
+std::string scene::aim_json() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    int n_hands = (hands_[0].present ? 1 : 0) + (hands_[1].present ? 1 : 0);
+    std::string s = "{\"hands\":" + std::to_string(n_hands);
+
+    float point[3], dir[3];
+    bool have_aim = aim_point(point);
+    bool have_ray = false;
+    if (have_aim) {
+        v3sub(point, env_.head_pos, dir);
+        have_ray = v3normalize(dir) > 1e-5f;
+    }
+    s += ",\"aim\":" + (have_aim ? vec_json(point, 3) : std::string("null"));
+    s += ",\"ray_origin\":" +
+         (have_ray ? vec_json(env_.head_pos, 3) : std::string("null"));
+    s += ",\"ray_dir\":" + (have_ray ? vec_json(dir, 3) : std::string("null"));
+    s += std::string(",\"pinching\":") + (pinch_held_ ? "true" : "false");
+
+    bool direct = false;
+    const panel *aimed = have_aim ? pick_aim_panel(point, &direct) : nullptr;
+    s += ",\"aimed_handle\":" +
+         (aimed ? std::to_string(aimed->handle) : std::string("null"));
+
+    // The quad the ray picks is the hit when it actually lands on it; a panel
+    // chosen by proximity alone leaves the ray to fall through to the room.
+    float hit[3];
+    bool have_hit = false;
+    if (aimed)
+        have_hit = panel_hit_point(*aimed, env_.head_pos, point, direct, hit,
+                                   nullptr, nullptr, nullptr);
+    if (!have_hit && have_ray)
+        have_hit = ray_plane_hit(env_, planes_, n_planes_, env_.head_pos, dir,
+                                 hit);
+    s += ",\"hit\":" + (have_hit ? vec_json(hit, 3) : std::string("null"));
+    return s + "}";
+}
+
+// ------------------------------------------------------------------
+// layouts
+// ------------------------------------------------------------------
+
+std::vector<layout_panel> scene::capture_layout() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::vector<layout_panel> out;
+    out.reserve(panels_.size());
+    for (const auto &p : panels_) {
+        layout_panel lp;
+        lp.kind = p->kind == panel_kind::note              ? "note"
+                  : p->kind == panel_kind::captured_window ? "captured"
+                                                           : "internal";
+        lp.app_id = p->app_id;
+        lp.title = p->title;
+        lp.body = p->note_body;
+        lp.accent = p->note_accent;
+        v3copy(p->pos, lp.pos);
+        lp.yaw = p->yaw;
+        lp.width_px = p->width_px;
+        lp.height_px = p->height_px;
+        lp.width_m = p->width_m;
+        lp.has_anchor = p->has_anchor;
+        std::memcpy(lp.anchor_uuid, p->anchor_uuid, 16);
+        v3copy(p->anchor_offset, lp.anchor_offset);
+        out.push_back(std::move(lp));
+    }
+    return out;
+}
+
+bool scene::apply_layout_pose(uint64_t handle, const layout_panel &saved) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    panel *p = find_panel(handle);
+    if (!p)
+        return false;
+    v3copy(saved.pos, p->pos);
+    v3copy(saved.pos, p->target_pos);
+    p->yaw = saved.yaw;
+    if (saved.width_m > 0.0f)
+        p->width_m = saved.width_m;
+    // A captured panel's pixel size belongs to the live window, not the file.
+    if (p->kind != panel_kind::captured_window && saved.width_px > 0 &&
+        saved.height_px > 0) {
+        p->width_px = saved.width_px;
+        p->height_px = saved.height_px;
+        p->surface.resize(saved.width_px, saved.height_px);
+    }
+    p->has_anchor = saved.has_anchor;
+    std::memcpy(p->anchor_uuid, saved.anchor_uuid, 16);
+    v3copy(saved.anchor_offset, p->anchor_offset);
+    p->reanchor_pending = false;
+    p->surface_dirty = true;
+    return true;
+}
+
+std::vector<uint64_t> scene::panel_handles() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::vector<uint64_t> out;
+    out.reserve(panels_.size());
+    for (const auto &p : panels_)
+        out.push_back(p->handle);
+    return out;
 }
 
 std::string scene::dump_state_json() const {
@@ -1719,7 +1913,7 @@ std::vector<scene::render_panel> scene::snapshot_render_panels(
         rp.surface_version = p->surface_version;
         // Multi-megabyte copy under the scene mutex on the render thread —
         // only pay it when the caller's cached texture is actually stale.
-        if (p->kind == panel_kind::internal_test_card &&
+        if (p->kind != panel_kind::captured_window &&
             (!have_version || have_version(p->handle) != p->surface_version))
             rp.rgba.assign(p->surface.pixels(),
                            p->surface.pixels() + p->surface.size_bytes());

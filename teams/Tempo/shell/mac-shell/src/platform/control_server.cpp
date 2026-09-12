@@ -14,6 +14,10 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <algorithm>
+
+#include "core/json_lite.h"
+#include "core/layout_store.h"
 #include "core/scene.h"
 #include "platform/frame_grab.h"
 #include "platform/shot_path.h"
@@ -22,6 +26,62 @@ namespace mac_shell {
 
 namespace {
 constexpr int POLL_TIMEOUT_MS = 20;  // also paces event broadcasts
+// `layout load` waits this long for a relaunched app's capture stream to
+// register its panel before giving up on that entry and counting it skipped.
+constexpr int RELAUNCH_WAIT_MS = 300;
+constexpr int RELAUNCH_POLL_MS = 25;
+
+// Reads {"title":str,"body":str,"accent":bool} into a patch. Every key is
+// optional here; the `note` verb is the one that insists on title + body.
+bool parse_note_json(const std::string &text, scene::note_patch &out,
+                     std::string &error) {
+    json_value doc;
+    if (!json_parse(text, doc, error))
+        return false;
+    if (!doc.is_object()) {
+        error = "expected a json object";
+        return false;
+    }
+    if (const json_value *v = doc.find("title")) {
+        if (!v->is_string()) {
+            error = "title must be a string";
+            return false;
+        }
+        out.set_title = true;
+        out.title = v->str;
+    }
+    if (const json_value *v = doc.find("body")) {
+        if (!v->is_string()) {
+            error = "body must be a string";
+            return false;
+        }
+        out.set_body = true;
+        out.body = v->str;
+    }
+    if (const json_value *v = doc.find("accent")) {
+        if (v->type != json_value::kind::boolean) {
+            error = "accent must be true or false";
+            return false;
+        }
+        out.set_accent = true;
+        out.accent = v->boolean;
+    }
+    return true;
+}
+
+// Splits "<sub> <rest>" — e.g. "save kitchen" — on the first run of spaces.
+void split_first_word(const std::string &in, std::string &word,
+                      std::string &rest) {
+    size_t sp = in.find_first_of(" \t");
+    if (sp == std::string::npos) {
+        word = in;
+        rest.clear();
+        return;
+    }
+    word = in.substr(0, sp);
+    size_t at = in.find_first_not_of(" \t", sp);
+    rest = at == std::string::npos ? "" : in.substr(at);
+}
 }
 
 std::string resolve_control_sock_path() {
@@ -468,6 +528,24 @@ bool control_server::handle_screenshot(conn &c, const char *line) {
     return true;
 }
 
+uint64_t control_server::relaunch_captured(const layout_panel &saved) {
+    if (!launch_app_ || saved.app_id.empty())
+        return 0;
+    std::vector<uint64_t> before = scene_.panel_handles();
+    launch_app_(saved.app_id);
+    // The capture layer registers the panel from its own stream callback, so
+    // the new handle shows up a few ticks after launch_app_ returns.
+    for (int waited = 0; waited <= RELAUNCH_WAIT_MS;
+         waited += RELAUNCH_POLL_MS) {
+        for (uint64_t h : scene_.panel_handles()) {
+            if (std::find(before.begin(), before.end(), h) == before.end())
+                return h;
+        }
+        usleep(RELAUNCH_POLL_MS * 1000);
+    }
+    return 0;
+}
+
 // ------------------------------------------------------------------
 // verb dispatch (mirrors control.c against the mac-shell scene)
 // ------------------------------------------------------------------
@@ -546,6 +624,10 @@ void control_server::on_line(conn &c, const char *line) {
         std::snprintf(rbuf, sizeof(rbuf), "ok gathered=%d",
                       scene_.gather_panels());
         queue(rbuf);
+        return;
+    }
+    if (is_bare_verb("aim")) {
+        queue_ok_str(scene_.aim_json());
         return;
     }
     if (is_bare_verb("stats")) {
@@ -646,6 +728,113 @@ void control_server::on_line(conn &c, const char *line) {
         } else {
             queue_err("parse_error", line);
         }
+        return;
+    }
+
+    if (sub_verb("note-update", arg)) {
+        std::string handle_str, json;
+        split_first_word(arg, handle_str, json);
+        char *end = nullptr;
+        unsigned long long handle = std::strtoull(handle_str.c_str(), &end, 10);
+        if (handle_str.empty() || !end || *end != '\0' || json.empty()) {
+            queue_err("parse_error", line);
+            return;
+        }
+        scene::note_patch patch;
+        std::string why;
+        if (!parse_note_json(json, patch, why)) {
+            queue_err("bad_json", why.c_str());
+        } else if (!patch.set_title && !patch.set_body && !patch.set_accent) {
+            queue_err("bad_json", "no title, body or accent to update");
+        } else if (!scene_.update_note((uint64_t)handle, patch)) {
+            queue_err("no_such_window", nullptr);
+        } else {
+            queue_ok();
+        }
+        return;
+    }
+    if (sub_verb("note", arg)) {
+        scene::note_patch patch;
+        std::string why;
+        if (!parse_note_json(arg, patch, why)) {
+            queue_err("bad_json", why.c_str());
+            return;
+        }
+        if (!patch.set_title || !patch.set_body) {
+            queue_err("bad_json", "title and body are required strings");
+            return;
+        }
+        uint64_t h = scene_.spawn_note_panel(patch.title, patch.body,
+                                             patch.accent);
+        if (h == 0) {
+            queue_err("resource_exhausted", nullptr);
+            return;
+        }
+        char rbuf[64];
+        std::snprintf(rbuf, sizeof(rbuf), "ok handle=%llu",
+                      (unsigned long long)h);
+        queue(rbuf);
+        return;
+    }
+    if (sub_verb("layout", arg)) {
+        std::string sub, name;
+        split_first_word(arg, sub, name);
+        if (sub == "list") {
+            std::string json = "{\"layouts\":[";
+            bool first = true;
+            for (const auto &n : layout_list()) {
+                if (!first)
+                    json += ",";
+                first = false;
+                json += "\"" + n + "\"";
+            }
+            queue_ok_str(json + "]}");
+            return;
+        }
+        if (sub != "save" && sub != "load") {
+            queue_err("parse_error", line);
+            return;
+        }
+        if (!layout_name_valid(name)) {
+            queue_err("bad_name", "use 1-40 of [A-Za-z0-9_-]");
+            return;
+        }
+        std::string why;
+        char rbuf[96];
+        if (sub == "save") {
+            std::vector<layout_panel> panels = scene_.capture_layout();
+            if (!layout_save(name, panels, why)) {
+                queue_err("io_error", why.c_str());
+                return;
+            }
+            std::snprintf(rbuf, sizeof(rbuf), "ok saved=%zu", panels.size());
+            queue(rbuf);
+            return;
+        }
+        std::vector<layout_panel> panels;
+        if (!layout_load(name, panels, why)) {
+            queue_err(why == "not_found" ? "not_found" : "bad_layout",
+                      why == "not_found" ? name.c_str() : why.c_str());
+            return;
+        }
+        int restored = 0, skipped = 0;
+        for (const auto &lp : panels) {
+            uint64_t h = 0;
+            if (lp.kind == "note")
+                h = scene_.spawn_note_panel(lp.title, lp.body, lp.accent);
+            else if (lp.kind == "captured")
+                h = relaunch_captured(lp);
+            else
+                h = scene_.spawn_panel(
+                    lp.app_id.empty() ? "test-card" : lp.app_id, lp.title);
+            if (h != 0 && scene_.apply_layout_pose(h, lp))
+                restored++;
+            else
+                skipped++;
+        }
+        std::snprintf(rbuf, sizeof(rbuf), "ok restored=%d skipped=%d",
+                      restored, skipped);
+        queue(rbuf);
         return;
     }
 
