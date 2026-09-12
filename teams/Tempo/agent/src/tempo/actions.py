@@ -9,7 +9,7 @@ from . import spatial
 from .perception import Snapshot
 from .shell import Shell, ShellError
 
-WHERE = ["in_front", "left", "right", "on_table", "on_wall", "where_looking"]
+WHERE = ["in_front", "left", "right", "on_table", "on_wall", "where_looking", "where_pointing"]
 PANEL_GAP_M = 0.45
 
 
@@ -20,14 +20,15 @@ def _where_schema(desc: str) -> types.Schema:
 DECLARATIONS = [
     types.FunctionDeclaration(
         name="place_note",
-        description="Create a note card floating in the room with the given text. Use for reminders, labels, lists, answers the wearer should keep seeing.",
+        description="Create a note card in the room. Use for reminders, labels, lists, answers the wearer should keep seeing.",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={
-                "text": types.Schema(type=types.Type.STRING, description="Short note text, under 60 characters."),
-                "where": _where_schema("Where to put it relative to the wearer or a surface."),
+                "title": types.Schema(type=types.Type.STRING, description="Two to four word title."),
+                "body": types.Schema(type=types.Type.STRING, description="The note text, one to three short sentences."),
+                "where": _where_schema("Where to put it. Use where_pointing when the wearer's hand is pointing at something; where_looking for 'here' or 'there'."),
             },
-            required=["text", "where"],
+            required=["title", "body", "where"],
         ),
     ),
     types.FunctionDeclaration(
@@ -140,6 +141,11 @@ class Executor:
             case "where_looking":
                 hit = spatial.gaze_hit(head, self.snap.planes, {"wall", "table", "floor"})
                 return hit or spatial.in_front(head, 1.2, right=side)
+            case "where_pointing":
+                hit = self.snap.aim.get("hit")
+                if hit:
+                    return spatial.add(hit, spatial.scale(spatial.normalize(spatial.sub(head["scene_pos"], hit)), 0.08))
+                return self._target("where_looking")
             case _:
                 return spatial.in_front(head, 0.9, right=side)
 
@@ -147,13 +153,13 @@ class Executor:
         self.shell.move(handle, self._target(where))
         if where == "on_table":
             self.shell.anchor(handle, "closest-horizontal")
-        elif where in ("on_wall", "where_looking"):
+        elif where in ("on_wall", "where_looking", "where_pointing"):
             self.shell.anchor(handle, "closest-wall")
 
-    def _do_place_note(self, out: Outcome, text: str, where: str) -> str:
-        handle = self.shell.launch_card(text)
+    def _do_place_note(self, out: Outcome, title: str, body: str, where: str) -> str:
+        handle = self.shell.note(title, body, accent=True)
         self._place(handle, where)
-        return f"note #{handle} {text!r} -> {where}"
+        return f"note #{handle} {title!r} -> {where}"
 
     def _do_open_app(self, out: Outcome, app: str, where: str) -> str:
         target = APP_ALIASES.get(app.lower().strip(), app)

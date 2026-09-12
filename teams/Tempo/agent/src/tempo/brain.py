@@ -9,7 +9,7 @@ from google.genai import types
 from .actions import DECLARATIONS
 from .perception import Snapshot
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
 
 SYSTEM = """You are Tempo, the agent inside a pair of spatial computing glasses.
 You see what the wearer sees (the image) and you know the room's geometry (the scene JSON:
@@ -52,5 +52,7 @@ class Brain:
                 temperature=0.2,
             ),
         )
-        calls = list(resp.function_calls or [])
-        return calls, (resp.text or "")
+        parts = resp.candidates[0].content.parts if resp.candidates and resp.candidates[0].content else []
+        calls = [p.function_call for p in parts if p.function_call]
+        text = " ".join(p.text for p in parts if p.text)
+        return calls, text

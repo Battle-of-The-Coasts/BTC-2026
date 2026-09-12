@@ -21,6 +21,7 @@ class Snapshot:
     head: dict[str, Any]
     planes: list[dict[str, Any]]
     windows: list[dict[str, Any]]
+    aim: dict[str, Any]
     taken_at: float
 
     def scene_text(self) -> str:
@@ -44,6 +45,12 @@ class Snapshot:
                 "tracking": self.head["tracking"],
                 "surfaces": spatial.describe_planes(self.planes, self.head),
                 "panels": panels,
+                "hand": {
+                    "visible": self.aim["hands"] > 0,
+                    "pointing_at_m": [round(v, 2) for v in self.aim["hit"]] if self.aim.get("hit") else None,
+                    "pointing_at_panel": self.aim.get("aimed_handle"),
+                    "pinching": self.aim["pinching"],
+                },
             },
             indent=1,
         )
@@ -68,5 +75,6 @@ def take(shell: Shell) -> Snapshot:
         head=shell.head_pose(),
         planes=shell.planes(),
         windows=shell.windows(),
+        aim=shell.aim(),
         taken_at=time.time(),
     )

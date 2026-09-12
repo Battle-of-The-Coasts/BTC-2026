@@ -77,6 +77,19 @@ class Shell:
             raise ShellError("launch produced no window")
         return new[0]
 
+    def note(self, title: str, body: str, accent: bool = False) -> int:
+        payload = json.dumps({"title": title, "body": body, "accent": accent})
+        return int(self.send(f"note {payload}").kv()["handle"])
+
+    def aim(self) -> dict[str, Any]:
+        return self.send("aim").json()
+
+    def layout_save(self, name: str) -> str:
+        return self.send(f"layout save {name}").body
+
+    def layout_load(self, name: str) -> str:
+        return self.send(f"layout load {name}").body
+
     def launch_app(self, target: str) -> int:
         before = {w["handle"] for w in self.windows()}
         self.send(f"launch-app {target}")

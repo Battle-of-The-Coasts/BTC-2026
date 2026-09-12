@@ -30,6 +30,10 @@ def add(a: Sequence[float], b: Sequence[float]) -> Vec3:
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
 
 
+def sub(a: Sequence[float], b: Sequence[float]) -> Vec3:
+    return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+
+
 def scale(v: Sequence[float], s: float) -> Vec3:
     return (v[0] * s, v[1] * s, v[2] * s)
 
