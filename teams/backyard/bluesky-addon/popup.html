@@ -1,0 +1,68 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Trust Score for Bluesky</title>
+<style>
+  body { width: 360px; margin: 0; font: 12.5px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #14171a; background: #fff; }
+  h1 { font-size: 14px; margin: 0; display: flex; align-items: center; gap: 6px; }
+  h1 svg { width: 16px; height: 16px; color: #30a46c; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #e3e6ea; }
+  section { padding: 10px 12px; border-bottom: 1px solid #e3e6ea; }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #5c6470; margin: 0 0 6px; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 4px 0; flex-wrap: wrap; }
+  .row label { min-width: 120px; color: #5c6470; }
+  input[type=number], input[type=text] { width: 70px; padding: 3px 6px; border: 1px solid #cfd4da; border-radius: 6px; font: inherit; }
+  input[type=text].wide { width: 200px; }
+  button { padding: 4px 9px; border: 1px solid #cfd4da; border-radius: 6px; background: #f6f7f8; font: inherit; cursor: pointer; }
+  button:hover { background: #eceff2; }
+  button.primary { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+  .kv span { color: #5c6470; }
+  ul.seeds { list-style: none; margin: 6px 0 0; padding: 0; max-height: 150px; overflow: auto; }
+  ul.seeds li { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-top: 1px solid #f0f2f4; }
+  ul.seeds li .h { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag { font-size: 10px; padding: 1px 6px; border-radius: 999px; }
+  .tag.t0 { background: #e9f7ef; color: #1b6b45; } .tag.t1 { background: #fdecec; color: #a3252a; }
+  .src { font-size: 10px; color: #8b8f95; }
+  .status { font-size: 11px; color: #5c6470; }
+  .switch { display: flex; align-items: center; gap: 6px; }
+  #msg { color: #a3252a; font-size: 11px; min-height: 14px; padding: 4px 12px; }
+</style></head>
+<body>
+<header>
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.5v6c0 5 3.3 8.6 7.5 10 4.2-1.4 7.5-5 7.5-10v-6z"/><path d="m9 12 2 2 4-4"/></svg> Trust Score · Bluesky</h1>
+  <label class="switch"><input type="checkbox" id="enabled" checked> overlay</label>
+</header>
+<section>
+  <h2>Graph &amp; analytics</h2>
+  <div class="row"><button id="openDash" class="primary">Open dashboard</button><button id="openPage">Graph of this page</button></div>
+  <div class="src">Overview, network view, accounts, seeds and method — like the dataset dashboard, on the live Bluesky graph.</div>
+</section>
+<section>
+  <h2>Server</h2>
+  <div class="row"><input type="text" class="wide" id="server" placeholder="http://127.0.0.1:8010"><button id="saveServer">Save</button></div>
+  <div class="kv status" id="status"><span>status</span><b>…</b></div>
+</section>
+<section>
+  <h2>Seeds (prior of the propagation)</h2>
+  <div class="row"><label>Random trusted seeds</label><input type="number" id="k" min="1" max="200" value="10"><button id="draw" class="primary">Draw new</button></div>
+  <div class="row"><input type="text" class="wide" id="seedHandle" placeholder="handle to add, e.g. bsky.app"><button data-label="0" class="addSeed">trusted</button><button data-label="1" class="addSeed">untrusted</button></div>
+  <div class="row"><button id="importList" class="primary">Import news outlets + verified accounts as trusted</button></div>
+  <div class="row"><label><input type="checkbox" id="ruleVerified"> verified account ⇒ trusted seed</label></div>
+  <div class="row"><label><input type="checkbox" id="ruleBots"> untrusted seed if younger than</label><input type="number" id="ruleDays" min="0" max="365" step="1" style="width:55px"> days or fewer than <input type="number" id="ruleFollowers" min="0" max="100000" style="width:60px"> followers</div>
+  <div class="row"><label><input type="checkbox" id="autoLabel"> moderation label (spam, bot, …) ⇒ untrusted seed</label></div>
+  <ul class="seeds" id="seeds"></ul>
+  <div class="row"><button id="clearSeeds">Clear all seeds</button><button id="recompute">Recompute scores</button></div>
+</section>
+<section>
+  <h2>Crawl (breadth-first)</h2>
+  <div class="row"><label>Max depth</label><input type="number" id="max_depth" min="0" max="3"></div>
+  <div class="row"><label>Expand per node</label><input type="number" id="expand_per_node" min="0" max="500"></div>
+  <div class="row"><label>List pages (×100)</label><input type="number" id="list_pages" min="1" max="20"></div>
+  <div class="row"><label>Posts read</label><input type="number" id="feed_limit" min="0" max="100"></div>
+  <div class="row"><label>TTL (hours)</label><input type="number" id="ttl_hours" min="1" max="1000"></div>
+  <div class="row"><label>Requests / s</label><input type="number" id="requests_per_second" min="0.5" max="9" step="0.5"></div>
+  <div class="row"><label>α (neighbourhood share)</label><input type="number" id="alpha" min="0" max="0.99" step="0.05"></div>
+  <div class="row"><button id="saveSettings" class="primary">Save settings</button></div>
+</section>
+<div id="msg"></div>
+<script src="popup.js"></script>
+</body></html>

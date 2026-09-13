@@ -1,0 +1,12 @@
+# tech stack: Python (backend), Node/Vite (frontend)
+backend/.venv/
+backend/**/__pycache__/
+backend/*.egg-info/
+backend/.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+# raw dataset downloads (1.5 GB) are not versioned; data/processed/<dataset> artifacts are, so the dashboard runs from a fresh checkout
+data/raw/
+data/processed/*.log
+.claude/
+data/bluesky/

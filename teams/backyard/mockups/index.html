@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trust Score — add-on mock-ups</title>
+<link rel="stylesheet" href="overlay.css">
+<style>
+  body { margin: 0; background: #0b1220; color: #e2e8f0; font: 15px/1.5 var(--ts-font); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-size: 30px; letter-spacing: -.02em; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+  h1 svg { width: 28px; height: 28px; }
+  .lead { color: #94a3b8; font-size: 16px; max-width: 720px; margin: 0 0 28px; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 36px; }
+  @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+  .card { display: block; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; background: #111a2e; color: inherit; text-decoration: none; transition: transform .1s, border-color .1s; }
+  .card:hover { transform: translateY(-2px); border-color: #2563eb; }
+  .card .pv { height: 170px; position: relative; overflow: hidden; }
+  .card .pv .fake { position: absolute; inset: 14px; border-radius: 10px; padding: 12px; font-size: 12px; }
+  .card .pv .fake .l { height: 8px; border-radius: 4px; margin: 8px 0; opacity: .5; }
+  .card .pv.reddit { background: #fff; }
+  .card .pv.reddit .fake { background: #fff; color: #181c1f; }
+  .card .pv.reddit .l { background: #cfd6db; }
+  .card .pv.x { background: #000; }
+  .card .pv.x .fake { background: #000; color: #e7e9ea; }
+  .card .pv.x .l { background: #2f3336; }
+  .card .body { padding: 14px 16px 16px; }
+  .card h2 { margin: 0 0 4px; font-size: 18px; }
+  .card p { margin: 0; color: #94a3b8; font-size: 14px; }
+  .fake .row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .fake .row .av { width: 20px; height: 20px; border-radius: 50%; background: #d7dde2; }
+  .fake .row b { font-size: 12px; }
+  .pv.x .fake .row .av { background: #334155; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; margin: 28px 0 10px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .legend .ts-badge { margin: 0; cursor: default; }
+  ul { padding-left: 20px; color: #cbd5e1; }
+  li { margin-bottom: 6px; }
+  code { font-family: var(--ts-mono); background: #1e293b; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4.5 5.5v6c0 5 3.3 8.6 7.5 10 4.2-1.4 7.5-5 7.5-10v-6z"/><path d="m9 12 2 2 4-4"/></svg>Trust Score · browser add-on mock-ups</h1>
+  <p class="lead">Two fake but realistic pages showing what the step-3 browser add-on will add on top of a social platform: a shield badge with a 0–100 trust score next to every username, a coloured ring on avatars, an explanation popover, and a per-page summary card. Same product story on both platforms so the examples line up.</p>
+
+  <div class="cards">
+    <a class="card" href="reddit.html">
+      <div class="pv reddit"><div class="fake">
+        <div class="row"><span class="av" style="background:linear-gradient(135deg,#0f9d58,#34d399)"></span><b>kira_ledger</b><span class="ts-badge ts-green"><span class="ts-num">94</span></span></div>
+        <div class="l" style="width:92%"></div><div class="l" style="width:70%"></div>
+        <div class="row" style="margin-left:20px"><span class="av"></span><b>SunnyDaysAhead_77</b><span class="ts-badge ts-red"><span class="ts-num">8</span></span></div>
+        <div class="l" style="width:60%;margin-left:20px"></div>
+        <div class="row" style="margin-left:40px"><span class="av"></span><b>Marcus_T_Invests</b><span class="ts-badge ts-red"><span class="ts-num">5</span></span></div>
+      </div></div>
+      <div class="body"><h2>Reddit · r/personalfinance thread</h2><p>An "11.5% APY savings app" question. A burst of same-day accounts pushes the product; the add-on flags them as one coordinated block and the brand account as "amplified".</p></div>
+    </a>
+    <a class="card" href="twitter.html">
+      <div class="pv x"><div class="fake">
+        <div class="row"><span class="av" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)"></span><b>Sarah Chen</b><span class="ts-badge ts-green"><span class="ts-num">96</span></span></div>
+        <div class="l" style="width:92%"></div><div class="l" style="width:78%"></div>
+        <div class="row"><span class="av"></span><b>Maria L.</b><span class="ts-badge ts-red"><span class="ts-num">4</span></span></div>
+        <div class="l" style="width:55%"></div>
+        <div class="row"><span class="av" style="background:#7f1d1d"></span><b>Breaking Alerts</b><span class="ts-badge ts-red"><span class="ts-num">21</span></span></div>
+      </div></div>
+      <div class="body"><h2>X / Twitter · "For you" timeline</h2><p>A journalist's thread about the same product draws replies from a bought-follower block; a 3-day-old "breaking news" account with 41k purchased followers scores 21 despite 8k reposts.</p></div>
+    </a>
+  </div>
+
+  <h3>Badge legend</h3>
+  <div class="legend">
+    <span class="ts-badge ts-green"><span class="ts-num">70–100</span></span> likely genuine
+    <span class="ts-badge ts-amber"><span class="ts-num">40–69</span></span> uncertain
+    <span class="ts-badge ts-red"><span class="ts-num">0–39</span></span> bot-like
+    <span class="ts-badge ts-grey"><span class="ts-num">n/a</span></span> not scored (declared bot)
+  </div>
+
+  <h3>What each page demonstrates</h3>
+  <ul>
+    <li><b>Badge</b>: trust score 0–100 (= 100 × trust, trust = ½ − r from the propagation). Hover or click for the explanation.</li>
+    <li><b>Popover</b>: profile facts, the exact decomposition of the score (prior + one row per network channel, rows sum to the score), the three most influential neighbours with their effect, flags (creation burst, dense block, seed), and the "How does this work?" explainer.</li>
+    <li><b>Summary card</b> in the side column: how many accounts on the page fall in each band, and which coordinated block is active on the page.</li>
+    <li><b>Overlay switch</b> in the top bar: hides everything the add-on injects so you can compare with the bare page.</li>
+    <li><b>Guide</b> with four numbered examples per page and "Show me" buttons that scroll to the example and open its popover.</li>
+  </ul>
+
+  <h3>Files</h3>
+  <ul>
+    <li><code>reddit.html</code>, <code>twitter.html</code>: the two pages (plain HTML, no build step, open directly in a browser).</li>
+    <li><code>overlay.css</code>, <code>overlay.js</code>: the shared add-on pieces (badge, ring, popover, banner, guide, switch). Each page passes its own account table to <code>TrustOverlay.init()</code>.</li>
+  </ul>
+</div>
+</body>
+</html>
