@@ -13,6 +13,7 @@ data/raw/   downloaded datasets (cresci-2015 from the Bot Repository, MGTAB from
 data/processed/<dataset>/   pipeline artifacts served by the API
 docs/       DESIGN.md (+ PDF)
 mockups/    static browser add-on mock-ups (Reddit, X/Twitter)
+bluesky-addon/  live Chrome add-on for bsky.app (BFS crawler + scoring server on :8010, see bluesky-addon/README.md)
 screenshots/ images used in this README
 ```
 

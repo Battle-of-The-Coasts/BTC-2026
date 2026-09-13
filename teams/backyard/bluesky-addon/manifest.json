@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Trust Score for Bluesky",
+  "version": "0.1.0",
+  "description": "Network-based trust score next to every account on bsky.app, computed live from the follow/interaction graph by a local crawler.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://127.0.0.1:8010/*", "http://localhost:8010/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html", "default_title": "Trust Score for Bluesky" },
+  "content_scripts": [
+    { "matches": ["https://bsky.app/*"], "css": ["overlay.css"], "js": ["content.js"], "run_at": "document_idle" }
+  ]
+}
