@@ -105,7 +105,7 @@
         <input id="focus" placeholder="focus @handle(s), comma-separated" value="${esc(state.focus)}" style="width:260px">
         <label class="small muted">hops <select id="hops">${[0, 1, 2, 3].map((h) => `<option ${h === state.hops ? 'selected' : ''}>${h}</option>`).join('')}</select></label>
         <label class="small muted">max nodes <select id="maxn">${[300, 800, 1500, 3000].map((h) => `<option ${h === state.maxNodes ? 'selected' : ''}>${h}</option>`).join('')}</select></label>
-        <button class="btn" id="load">Load</button><button class="btn" id="core">Core graph</button>
+        <button class="btn" id="load">Load</button><button class="btn" id="core">Core graph</button><button class="btn" id="fit" title="fit the whole graph in the view">Fit</button>
         <label class="small muted">colour <select id="color"><option value="trust">trust</option><option value="depth">crawl depth</option><option value="seed">seeds</option><option value="crawled">crawled vs. leaf</option></select></label>
         <div class="slider">contrast ×<span id="cval">${state.contrast}</span><input type="range" id="contrast" min="1" max="20" value="${state.contrast}"></div>
         <span class="small muted">edges:</span>${Object.keys(EDGE_COLORS).map((k) => `<label class="small"><input type="checkbox" data-edge="${k}" ${state.edgeOn[k] ? 'checked' : ''}> <span style="color:${EDGE_COLORS[k]}">■</span> ${k}</label>`).join('')}
@@ -117,6 +117,7 @@
     $('#load').addEventListener('click', () => { state.focus = $('#focus').value.trim(); state.hops = Number($('#hops').value); state.maxNodes = Number($('#maxn').value); loadGraph(); });
     $('#focus').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#load').click(); });
     $('#core').addEventListener('click', () => { state.focus = ''; $('#focus').value = ''; loadGraph(); });
+    $('#fit').addEventListener('click', () => fitView());
     $('#color').value = state.color; $('#color').addEventListener('change', () => { state.color = $('#color').value; draw(); legend(); });
     $('#contrast').addEventListener('input', () => { state.contrast = Number($('#contrast').value); $('#cval').textContent = state.contrast; draw(); });
     content.querySelectorAll('[data-edge]').forEach((cb) => cb.addEventListener('change', () => { state.edgeOn[cb.dataset.edge] = cb.checked; draw(); }));
@@ -152,12 +153,15 @@
       const t0 = performance.now();
       while (i < ticks && performance.now() - t0 < 40) { sim.tick(); i++; }
       draw();
-      if (i < ticks) setTimeout(step, 0); else { const el = $('#netinfo'); if (el) el.textContent = el.textContent.replace(' · layout…', ''); }
+      if (i < ticks) { setTimeout(step, 0); return; }
+      fitView();                       // the initial scale is a guess from the node count; fit the real extent
+      const el = $('#netinfo'); if (el) el.textContent = el.textContent.replace(' · layout…', '');
     };
-    net = { canvas, ctx, nodes, edges, byId, W, H, dpr, transform: d3.zoomIdentity, focusIds: new Set(g.focus) };
+    net = { canvas, ctx, nodes, edges, byId, W, H, dpr, transform: d3.zoomIdentity, focusIds: new Set(g.focus), zoom: null };
     const ext = 0.45 * Math.min(W, H) / Math.sqrt(nodes.length) * 4;
     net.transform = d3.zoomIdentity.translate(W / 2, H / 2).scale(Math.max(0.2, Math.min(2.5, ext / 40)));
     const zoom = d3.zoom().scaleExtent([0.05, 12]).on('zoom', (ev) => { net.transform = ev.transform; draw(); });
+    net.zoom = zoom;
     d3.select(canvas).call(zoom).call(zoom.transform, net.transform);
     canvas.onmousemove = (ev) => { const n = hit(ev); const tip = $('#tip'); if (n) { tip.style.display = 'block'; tip.style.left = (ev.offsetX + 12) + 'px'; tip.style.top = (ev.offsetY + 12) + 'px'; tip.innerHTML = `<b>${esc(n.n || '')}</b> @${esc(n.h || n.id)}<br>${n.t == null ? 'no score' : 'trust ' + Math.round(n.t * 100)} · ${n.deg} edges · depth ${n.d == null ? '?' : n.d}${n.c ? ' · crawled' : ''}${n.s != null ? ' · ' + (n.s ? 'untrusted' : 'trusted') + ' seed' : ''}`; canvas.style.cursor = 'pointer'; } else { tip.style.display = 'none'; canvas.style.cursor = 'grab'; } };
     canvas.onclick = (ev) => { const n = hit(ev); if (n) { select(n.id); } };
@@ -213,6 +217,21 @@
     h += `<span style="margin-left:auto">ring: <span style="color:#4cc9f0">focus</span> · <span style="color:#30a46c">trusted seed</span> · <span style="color:#e5484d">untrusted seed</span></span>`;
     el.innerHTML = h;
   }
+  function fitView(pad = 44) {
+    if (!net || !net.nodes.length) return;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const n of net.nodes) {
+      if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) continue;
+      x0 = Math.min(x0, n.x - n.r); x1 = Math.max(x1, n.x + n.r);
+      y0 = Math.min(y0, n.y - n.r); y1 = Math.max(y1, n.y + n.r);
+    }
+    if (!Number.isFinite(x0)) return;
+    const k = Math.max(0.05, Math.min(12, Math.min((net.W - 2 * pad) / Math.max(1, x1 - x0), (net.H - 2 * pad) / Math.max(1, y1 - y0))));
+    net.transform = d3.zoomIdentity.translate(net.W / 2 - k * (x0 + x1) / 2, net.H / 2 - k * (y0 + y1) / 2).scale(k);
+    if (net.zoom) d3.select(net.canvas).call(net.zoom.transform, net.transform);
+    draw();
+  }
+
   function centerOn(n) { if (!net) return; net.transform = d3.zoomIdentity.translate(net.W / 2 - n.x * 2.5, net.H / 2 - n.y * 2.5).scale(2.5); d3.select(net.canvas).call(d3.zoom().transform, net.transform); draw(); }
   function select(id) { state.selected = id; draw(); openNode(id); }
 
