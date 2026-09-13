@@ -12,6 +12,8 @@ frontend/   React + TypeScript dashboard (sigma.js network explorer, recharts)
 data/raw/   downloaded datasets (cresci-2015 from the Bot Repository, MGTAB from GitHub/Google Drive)
 data/processed/<dataset>/   pipeline artifacts served by the API
 docs/       DESIGN.md (+ PDF)
+mockups/    static browser add-on mock-ups (Reddit, X/Twitter)
+screenshots/ images used in this README
 ```
 
 ## Quick start
@@ -52,23 +54,49 @@ Channel weights are estimated from the label homophily of seed–seed edges (ble
 The dashboard decomposes every score into prior + per-channel + per-neighbour terms, lists the local-model
 feature contributions, and shows Leiden communities, dense co-following blocks and creation bursts.
 
-## Deploying on the internet
+## Screenshots
 
-The site is a single FastAPI process serving the built dashboard and the precomputed artifacts (~60 MB, ~1 GB RAM
-once loaded), so any 2 GB VM or container host works. `deploy/` contains a multi-stage Dockerfile (builds the
-React app, installs the Python package, copies `data/processed` and `docs`), a docker-compose file and a Caddy
-config that gives automatic HTTPS and optional password protection.
+### Dashboard: metrics (Overview tab)
+
+Out-of-fold ROC AUC / AP / F1 of the trust score against three baselines (local model only, propagation only,
+raw uncalibrated trust), ROC curves, the score histogram by label, robustness sweeps (share of labelled seeds,
+label noise), the most useful local features and the learned per-channel weights.
+
+![Overview tab of the dashboard: metrics on cresci-2015](screenshots/dashboard-overview.png)
+
+MGTAB is the harder, more recent dataset (every account labelled, bots mixed into the genuine population rather
+than sitting in separate follower farms): out-of-fold AUC drops to 0.96 and propagation alone is close to useless,
+so the score leans on the local model and the learned channel weights.
+
+![Overview tab of the dashboard: metrics on MGTAB](screenshots/dashboard-overview-mgtab.png)
+
+### Dashboard: network explorer (Network tab)
+
+sigma.js view of the labelled accounts and their neighbourhood, coloured by calibrated trust (red = bot-like,
+green = trusted). The three red blobs are the cresci-2015 fake-follower groups, the green mass the genuine
+accounts; toggle edge channels, focus on a cluster, search a handle, or click a node for its score decomposition.
+
+![Network tab of the dashboard: cresci-2015 follow graph](screenshots/dashboard-network.png)
+
+On MGTAB there are no separate bot blobs: bot-like accounts (red/amber) are scattered at the fringe of the genuine
+communities, which is why the network alone cannot separate them.
+
+![Network tab of the dashboard: MGTAB graph](screenshots/dashboard-network-mgtab.png)
+
+### Browser add-on mock-up (step 3 preview)
+
+Static, realistic fake of what the step-3 browser add-on will inject into a Reddit thread (an X/Twitter version
+is included too): a trust badge next to every username, a popover that decomposes the score into own evidence,
+per-channel network terms and cluster membership, and a side card summarising the page. Numbers are illustrative
+but follow the real score's structure. Details in [`mockups/README.md`](mockups/README.md).
+
+![Reddit mock-up with the Trust Score overlay and an open popover](screenshots/mockup-reddit.png)
+
+To see it, serve the `mockups/` folder (no build step) and open the landing page, which links to both mock-ups and
+has a guide with "Show me" buttons for the four example accounts:
 
 ```bash
-# 1. produce the artifacts locally (they are baked into the image)
-cd backend && .venv/bin/python scripts/run_pipeline.py cresci-2015 && .venv/bin/python scripts/run_pipeline.py mgtab && cd ..
-
-# 2. on the server (Docker installed, DNS A record of DOMAIN -> server IP, ports 80/443 open)
-export DOMAIN=trust.example.com
-export BASIC_AUTH_USER=demo BASIC_AUTH_HASH="$(docker run --rm caddy:2 caddy hash-password --plaintext 'choose-a-password')"
-docker compose -f deploy/docker-compose.yml up -d --build
+python3 -m http.server 8765 --directory mockups     # then open http://127.0.0.1:8765/index.html
 ```
 
-Alternatives: any PaaS that builds a Dockerfile (Fly.io, Render, Railway; pick a 1–2 GB instance and set the root
-Dockerfile path to `deploy/Dockerfile`), or a Hugging Face Space (Docker SDK). Keep the demo password-protected or
-pseudonymise `screen_name` before publishing: cresci-2015 and MGTAB are released for research use only.
+Opening `mockups/index.html` directly in a browser (file://) works too.
